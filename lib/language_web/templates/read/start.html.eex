@@ -1,0 +1,7 @@
+<h1>Start</h1>
+
+Choose which site to translate:
+<%= form_for @conn, read_path(@conn, :index), [method: "get"],  fn f -> %>
+	<%= url_input f, :site %>
+	<%= submit "Begin" %>
+<% end %>
