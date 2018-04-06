@@ -15,6 +15,7 @@ defmodule LanguageWeb.Router do
     get "/", PageController, :index
     get "/browse", ReadController, :index
     get "/start", ReadController, :start
+    resources "/users", UserController
   end
 
 end
