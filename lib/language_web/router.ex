@@ -13,7 +13,7 @@ defmodule LanguageWeb.Router do
     pipe_through :browser # Use the default browser stack
 
     get "/", PageController, :index
-    get "/browse", ReadController, :index
+    get "/browse", ReadController, :browse
     get "/start", ReadController, :start
     resources "/users", UserController
   end

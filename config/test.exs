@@ -9,6 +9,9 @@ config :language, LanguageWeb.Endpoint,
 # Print only warnings and errors during test
 config :logger, level: :warn
 
+# Don't waste time with authentication when running tests
+config :bcrypt_elixir, :log_rounds, 4
+
 # Configure your database
 config :language, Language.Repo,
   adapter: Ecto.Adapters.Postgres,
