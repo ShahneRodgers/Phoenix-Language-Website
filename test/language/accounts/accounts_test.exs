@@ -65,5 +65,15 @@ defmodule Language.AccountsTest do
       user = user_fixture()
       assert %Ecto.Changeset{} = Accounts.change_user(user)
     end
+
+    test "find_by_username/1 returns user" do
+      user = user_fixture()
+      assert Accounts.find_by_username(user.username) == user
+    end
+
+    test "find_by_username/1 returns nil if missing" do
+      user = user_fixture()
+      assert Accounts.find_by_username("missing") == nil
+    end
   end
 end

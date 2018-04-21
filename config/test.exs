@@ -20,3 +20,5 @@ config :language, Language.Repo,
   database: "language_test",
   hostname: "localhost",
   pool: Ecto.Adapters.SQL.Sandbox
+
+config :language, :environment, :test

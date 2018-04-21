@@ -38,6 +38,15 @@ defmodule Language.Accounts do
   def get_user!(id), do: Repo.get!(User, id)
 
   @doc """
+  Finds a user by username.
+
+  Returns nil if the User does not exist.
+  """
+  def find_by_username(name) do
+    Repo.get_by(User, username: name)
+  end
+
+  @doc """
   Creates a user.
 
   ## Examples

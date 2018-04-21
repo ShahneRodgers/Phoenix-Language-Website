@@ -2,7 +2,6 @@ defmodule Language.ExternalSiteTest do
   use Language.DataCase
 
   import Mock
-  import LanguageWeb.Router.Helpers
 
   alias Language.ExternalSite
 
