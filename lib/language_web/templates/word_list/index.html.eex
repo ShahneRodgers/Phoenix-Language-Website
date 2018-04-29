@@ -1,0 +1,10 @@
+<h2>Current Vocab</h2>
+
+<%= if @word_lists do %>
+  <%= for word_list <- @word_lists do %>
+    <%= render "show.html", Map.put(assigns, :word_list, word_list) %>
+  <% end %>
+<% end %>
+
+<span><%= link "New Word List", to: word_list_path(@conn, :new) %></span>
+

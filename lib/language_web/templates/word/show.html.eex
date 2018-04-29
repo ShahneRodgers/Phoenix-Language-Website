@@ -1,0 +1,28 @@
+<h2>Show Word</h2>
+
+<ul>
+
+  <li>
+    <strong>Native:</strong>
+    <%= @word.native %>
+  </li>
+
+  <li>
+    <strong>Replacement:</strong>
+    <%= @word.replacement %>
+  </li>
+
+  <li>
+    <strong>Notes:</strong>
+    <%= @word.notes %>
+  </li>
+
+  <li>
+    <strong>Audio:</strong>
+    <%= @word.audio %>
+  </li>
+
+</ul>
+
+<span><%= link "Edit", to: word_path(@conn, :edit, @word) %></span>
+<span><%= link "Back", to: word_list_path(@conn, :index) %></span>

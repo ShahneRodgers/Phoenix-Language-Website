@@ -1,0 +1,48 @@
+<div class="word_list">
+
+  <h3><%= link @word_list.title, to: word_list_path(@conn, :show, @word_list)%>
+
+  <td class="text-right">
+    <span><%= link "Edit", to: word_list_path(@conn, :edit, @word_list), class: "btn btn-default btn-xs" %></span>
+    <span><%= link "Delete", to: word_list_path(@conn, :delete, @word_list), method: :delete, data: [confirm: "Are you sure?"], class: "btn btn-danger btn-xs" %></span>
+  </td>
+
+</h3>
+
+  <span id="summary"><%= @word_list.summary %>
+
+  <h4>Words</h4>
+
+  <table class="words_table">
+    <thead>
+      <tr>
+        <th>Original</th>
+        <th>Replacement</th>
+        <th>Notes</th>
+        <th></th>
+      </tr>
+    </thead>
+
+    </tr>
+
+    <tbody>
+      <%= for word <- @word_list.words do %>
+        <tr>
+          <td><%= word.native %></td>
+          <td><%= word.replacement %></td>
+          <td><%= word.notes %></td>
+
+          <td class="text-right">
+            <span><%= link "Show", to: word_path(@conn, :show, word), class: "btn btn-default btn-xs" %></span>
+            <span><%= link "Edit", to: word_path(@conn, :edit, word), class: "btn btn-default btn-xs" %></span>
+            <span><%= link "Delete", to: word_path(@conn, :delete, word), method: :delete, data: [confirm: "Are you sure?"], class: "btn btn-danger btn-xs" %></span>
+          </td>
+
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <%= link "Add Word", to: word_path(@conn, :new, word_list: @word_list.id), class: "btn btn-default btn-s" %>
+
+</div>
