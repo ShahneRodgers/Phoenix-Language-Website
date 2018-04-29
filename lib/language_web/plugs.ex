@@ -3,7 +3,6 @@ defmodule LanguageWeb.Plugs.Authentication do
   	import Plug.Conn
   	import Phoenix.Controller, only: [put_flash: 3, redirect: 2]
 
-	alias Language.Authenticator
   	alias Language.Authenticator.Session
   	alias Language.SessionHelper
 
@@ -21,7 +20,7 @@ defmodule LanguageWeb.Plugs.Authentication do
 
 	def authenticate(conn) do
 		case SessionHelper.get_valid_session(conn) do
-			%Session{} -> conn
+			%Session{user_id: id} -> assign(conn, :user, id)
 			nil -> fail_authentication(conn)
 		end
 	end

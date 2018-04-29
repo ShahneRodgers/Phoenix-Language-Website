@@ -13,16 +13,12 @@ defmodule LanguageWeb.Router do
 
   pipeline :authenticate do
     plug :browser
-    if Application.get_env(:language, :environment) != :test do
-      plug Authentication, level: :user
-    end
+    plug Authentication, level: :user
   end
 
   pipeline :authenticate_admin do
     plug :authenticate
-    if Application.get_env(:language, :environment) != :test do
-      plug Authentication, level: :admin
-    end
+    plug Authentication, level: :admin
   end
 
   scope "/", LanguageWeb do
@@ -42,9 +38,16 @@ defmodule LanguageWeb.Router do
   end
 
   scope "/", LanguageWeb do
-    pipe_through :authenticate_admin
+    pipe_through :browser # :authenticate_admin
 
     resources "/users", UserController
+  end
+
+  scope "/vocab", LanguageWeb do
+    pipe_through :authenticate
+
+    resources "/wordlists", WordListController
+    resources "/words", WordController
   end
 
 end

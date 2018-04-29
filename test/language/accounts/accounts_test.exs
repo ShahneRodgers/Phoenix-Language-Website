@@ -72,7 +72,7 @@ defmodule Language.AccountsTest do
     end
 
     test "find_by_username/1 returns nil if missing" do
-      user = user_fixture()
+      user_fixture()
       assert Accounts.find_by_username("missing") == nil
     end
   end

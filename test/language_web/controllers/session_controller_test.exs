@@ -1,74 +1,50 @@
 defmodule LanguageWeb.SessionControllerTest do
   use LanguageWeb.ConnCase
 
-  import Mock
-
-  alias Language.Accounts
-  alias Language.Accounts.User
+  alias Language.TestHelpers
 
   alias Language.SessionHelper
 
+  setup do
+    user = TestHelpers.ensure_user()
+
+    {:ok, [user: user]}
+  end
+
   describe "Login" do
     test "incorrect username", %{conn: conn} do
-      with_mock Accounts, [find_by_username: fn("test") -> nil end] do
-        conn = post(conn, "/login", %{"username": "test", "password": "a"})
-        assert get_flash(conn, :warning) == "Incorrect username or password"
-        assert html_response(conn, 200) =~ "Login"
-      end
+      conn = post(conn, "/login", %{"username": "test", "password": "a"})
+      assert get_flash(conn, :warning) == "Incorrect username or password"
+      assert html_response(conn, 200) =~ "Login"
     end
 
-    test "incorrect password", %{conn: conn} do
-      with_mock Accounts, [find_by_username: fn("name") ->  
-          %User{username: "name", password: "incorrect", email: "test"} end] do
-        conn = post(conn, "/login", %{"username": "name", "password": "a"})
-        assert get_flash(conn, :warning) == "Incorrect username or password"
-      end
+    test "incorrect password", %{conn: conn, user: user} do
+      conn = post(conn, "/login", %{"username": user.username, "password": "a"})
+      assert get_flash(conn, :warning) == "Incorrect username or password"
     end
 
-    test "succeeds", %{conn: conn} do
-      username = "name"
-      pw = Comeonin.Bcrypt.hashpwsalt("pw")
-      user = %User{id: 1, username: username, password: pw, email: "test"}
-      session = "some session"
+    test "succeeds", %{conn: conn, user: user} do
+      password = TestHelpers.get_raw_test_user_password()
+      
+      conn = post(conn, "/login", %{"username": user.username, "password": password})
+      assert redirected_to(conn) =~ "/browse"
 
-      with_mocks [{Accounts, [], [find_by_username: fn(^username) -> user end]},
-         {SessionHelper, [], [create_session: fn(^user) -> {:ok, session} end,
-                              add_session: fn(c, ^session) -> c end]}] do
-
-        conn = post(conn, "/login", %{"username": username, "password": "pw"})
-        assert redirected_to(conn) =~ "/browse"
-
-        assert called Accounts.find_by_username(username)
-        assert called SessionHelper.create_session(user)
-        assert called SessionHelper.add_session(:_, session)
-      end
+      assert SessionHelper.get_valid_session(conn) != nil
     end
   end
 
   describe "Logout" do
-
     test "logged in", %{conn: conn} do
-      session = "session test"
+      conn = TestHelpers.act_as_user(conn)
+      |> get("/logout")
 
-      with_mocks [{SessionHelper, [], [get_valid_session: fn(_c) -> session end,
-                                   delete_session: fn(_s) -> nil end,
-                                   clear_session: fn(c) -> c end ]}] do
-        conn = get(conn, "/logout")
-        assert redirected_to(conn) =~ "/login"
-
-        assert called SessionHelper.get_valid_session(:_)
-        assert called SessionHelper.delete_session(session)
-        assert called SessionHelper.clear_session(:_)
-      end
+      assert redirected_to(conn) =~ "/login"
+      assert is_nil(SessionHelper.get_valid_session(conn))
     end
 
     test "not logged in", %{conn: conn} do
-      with_mock SessionHelper, [get_valid_session: fn(_c) -> nil end] do
-        conn = get(conn, "/logout")
-        assert redirected_to(conn) =~ "/login"
-
-        assert called SessionHelper.get_valid_session(:_)
-      end
+      conn = get(conn, "/logout")
+      assert redirected_to(conn) =~ "/login"
     end
   end
 end
