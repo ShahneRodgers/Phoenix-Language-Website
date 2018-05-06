@@ -49,6 +49,9 @@ defmodule Language.ExternalSite do
 
 	defp update_html(site, update_functions, is_visible, value) when is_list(value) do
 		Enum.map(value, fn(value) -> update_html(site, update_functions, is_visible, value) end)
+		# Flatten the list since update_html might need to return a list of new "HTML nodes"
+		# rather than just a single HTML node. It seems like Floki never nests lists naturally.
+		|> List.flatten
 	end
 
 	defp update_html(site, update_functions, is_visible, value) when is_tuple(value) do
@@ -66,9 +69,12 @@ defmodule Language.ExternalSite do
 		|> List.to_tuple
 	end
 
-	defp update_html(_site, _update_functions, _is_visible, value) do
-		# Comment, maybe?
-		value
+	defp update_html(_site, %{:update_visible_text => update_text}, is_visible, value) do
+		if is_binary(value) and is_visible do
+			update_text.(value)
+		else
+			value
+		end
 	end
 
 	defp update_url(retrieved_uri, update_functions, is_visible, possible_urls) do

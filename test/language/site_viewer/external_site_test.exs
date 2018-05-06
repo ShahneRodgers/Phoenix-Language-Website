@@ -81,6 +81,16 @@ defmodule Language.ExternalSiteTest do
     assert result == expected
   end
 
+  test "Update site updates marked-up body text" do
+    html = "<html><body><p>This <i>is</i> hopefully a <b>better</b> test of </p> html</body></html>"
+
+    result = ExternalSite.update_site("www.site.com", html,
+      %{:update_visible_links => &assert_false/1, 
+      :update_visible_text => fn value -> String.upcase(value) end})
+
+    assert result == "<html><body><p>THIS <i>IS</i> HOPEFULLY A <b>BETTER</b> TEST OF </p> HTML</body></html>"
+  end
+
   defp assert_string_equal_ignore_space(observed, expected) do
     assert String.replace(observed, ~r/\n\t/, "") == String.replace(expected, ~r/\n\t/, "")
   end
