@@ -26,6 +26,19 @@ defmodule Language.VocabTest do
       assert Vocab.list_words() == [word]
     end
 
+    test "list_words_by_user/1 returns all user-owned words" do
+      user = TestHelpers.ensure_user()
+
+      word = word_fixture()
+      assert Vocab.list_words_by_user(user.id) == [word]
+    end
+
+    test "list_words_by_user/1 returns empty list if no words" do
+      word_fixture()
+
+      assert Vocab.list_words_by_user(15236) == []
+    end
+
     test "get_word!/1 returns the word with given id" do
       word = word_fixture()
       assert Vocab.get_word!(word.id) == word

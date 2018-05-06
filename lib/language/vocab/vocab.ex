@@ -104,6 +104,18 @@ defmodule Language.Vocab do
 
   alias Language.Vocab.WordList
 
+
+  @doc """
+  Returns a list of all the words belonging to the selected user.
+  """
+  def list_words_by_user(user_id) do
+    query = from word in Word, 
+            join: list in WordList, on: word.word_list_id == list.id,
+            where: list.user_id == ^user_id,
+            select: word
+    Repo.all(query)
+  end
+
   @doc """
   Returns the list of wordlists.
 

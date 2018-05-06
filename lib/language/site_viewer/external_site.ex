@@ -41,7 +41,7 @@ defmodule Language.ExternalSite do
 
 	defp update_html(_site, %{:update_visible_text => update_text}, is_visible, [text]) when is_binary(text) do
 		if is_visible do
-			[update_text.(text)]
+			update_text.(text)
 		else
 			[text]
 		end

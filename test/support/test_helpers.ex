@@ -46,4 +46,12 @@ defmodule Language.TestHelpers do
 		ensure_user()
 		|> create_word_list
 	end
+
+	def create_word(native, replacement, audio \\ nil, notes \\ nil) do
+		user = ensure_user()
+		word_list = create_word_list(user)
+
+		Repo.insert! %Vocab.Word{native: native, replacement: replacement, 
+					audio: audio, notes: notes, word_list_id: word_list.id}
+	end
 end
