@@ -68,6 +68,17 @@ defmodule Language.ExternalSiteTest do
     assert_string_equal_ignore_space(result, expected)
   end
 
+  test "Update site ignores image urls" do
+    html = "<html><body><img src=\"/someimg\" alt=\"text\"/></body></html>"
+
+    result = ExternalSite.update_site("https://original_url.com", html,
+      %{:update_visible_links => fn _ -> "This shouldn't happen" end, :update_visible_text => &assert_false/1})
+
+    expected = String.replace(html, "/someimg", "https://original_url.com/someimg")
+
+    assert_string_equal_ignore_space(result, expected)
+  end
+
   test "Update site updates body text" do
     html = "<html><head><title>This is a title</title></head>" <> 
     "<body><p id=\"some id\">This is a paragraph</p></body></html>"

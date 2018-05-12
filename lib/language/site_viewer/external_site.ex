@@ -33,8 +33,6 @@ defmodule Language.ExternalSite do
 		else
 			# References to resources (ie, html elements in <head>) should use direct
 			# urls rather than being redirected through this website.
-			#is_visible = name not in ["head", "title", "style", "meta", "link", "script", "base", "img"]
-			#{name, Enum.map(attr, fn(value) -> update_html(site, update_functions, is_visible, value) end)}
 			{name, attributes, Enum.map(value, fn(val) -> update_html(site, update_functions, name=="body", val) end)}
 		end
 	end
@@ -54,19 +52,30 @@ defmodule Language.ExternalSite do
 		|> List.flatten
 	end
 
-	defp update_html(site, update_functions, is_visible, value) when is_tuple(value) do
-		for i <- 0..(tuple_size(value) - 1) do
-			element = elem(value, i)
-			cond do
-				is_binary(element) ->
-					# Might be a url
-					update_url(site, update_functions, is_visible, element)
-				true -> 
-					# Update the tuple or list
-					update_html(site, update_functions, is_visible, element)
-			end
-		end
-		|> List.to_tuple
+	defp update_html(site, update_functions, is_visible, value) when is_tuple(value) and tuple_size(value) == 3 do
+		# Tuples with three elements are in the form of {tag, attributes, child_nodes}
+		tag = elem(value, 0)
+		# Embedded images don't need to be redirected through this site since they don't have words
+		# to update (no OCR support).
+		is_visible = is_visible and tag not in ["img"]
+
+		attributes = update_html(site, update_functions, is_visible, elem(value, 1))
+
+		text = update_html(site, update_functions, is_visible, elem(value, 2))
+
+		{tag, attributes, text}
+	end
+
+	defp update_html(site, update_functions, is_visible, value) when is_tuple(value) and tuple_size(value) == 2 do
+		# Tuples with two elements are attribute pairs.
+		attr_type = elem(value, 0)
+
+		# It might be better to check the attr_type for href, link, etc - but there are 18
+		# possible attribute types listed here: https://www.w3.org/TR/REC-html40/index/attributes.html
+		# and that would require changing the code if anything new is added.
+		attr_value = update_possible_urls(site, update_functions, is_visible, elem(value, 1))
+
+		{attr_type, attr_value}
 	end
 
 	defp update_html(_site, %{:update_visible_text => update_text}, is_visible, value) do
@@ -77,7 +86,7 @@ defmodule Language.ExternalSite do
 		end
 	end
 
-	defp update_url(retrieved_uri, update_functions, is_visible, possible_urls) do
+	defp update_possible_urls(retrieved_uri, update_functions, is_visible, possible_urls) do
 		String.split(possible_urls, ", ")
 		|> Enum.map(fn(path) -> update_url_path(retrieved_uri, path, update_functions, is_visible) end)
 		|> Enum.join(", ")
