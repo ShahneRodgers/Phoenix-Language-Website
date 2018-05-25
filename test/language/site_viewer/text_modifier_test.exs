@@ -32,10 +32,21 @@ defmodule Language.TextModifierTest do
 		end
 
 		test "keeps punctuation", %{user: id, original: orig, updated: updated} do
-			obs = TextModifier.get_update_function(id).(orig <> "!")
+			text = "$_" <> orig <> "!"
+
+			obs = TextModifier.get_update_function(id).(text)
 			|> Floki.raw_html
 
-			assert obs == expected_html(orig, updated <> "!")
+			assert obs == expected_html(text, "$_" <> updated <> "!")
+		end
+
+		test "ignores punctuation inside word", %{user: id, original: orig, updated: updated} do
+			text = String.first(orig) <> "&" <> String.slice(orig, 1..-1)
+
+			obs = TextModifier.get_update_function(id).(text)
+			|> Floki.raw_html
+
+			assert obs == expected_html(text, updated)
 		end
 
 		test "doesn't translate unknown word", %{user: id} do
@@ -70,7 +81,7 @@ defmodule Language.TextModifierTest do
 		end
 	end
 
-	describe "Translates phrase" do
+	describe "translates phrase" do
 		setup [:create_phrase]
 
 		test "translates phrase", %{user: id, original: orig, updated: updated} do
@@ -100,13 +111,22 @@ defmodule Language.TextModifierTest do
 			assert String.downcase(obs) == String.downcase(expected_html(String.upcase(orig), String.upcase(updated)))
 		end
 
-		test "doesn't translate split phrase", %{user: id, original: orig} do
+		test "does nothing for split phrase", %{user: id, original: orig} do
 			words = String.split(orig)
 			expected = hd(words) <> " split " <> Enum.join(tl(words), " ")
 			obs = TextModifier.get_update_function(id).(expected)
 				  |> Floki.raw_html
 
-			assert obs == [expected]
+			assert String.trim(obs) == expected
+		end
+
+		test "split only by non-letters", %{user: id, original: orig, updated: updated} do
+			words = String.split(orig)
+			text = hd(words) <> "1~_" <> Enum.join(tl(words), "")
+			obs = TextModifier.get_update_function(id).(text)
+				|> Floki.raw_html
+
+			assert obs == expected_html(text, updated)
 		end
 	end
 

@@ -92,7 +92,42 @@ defmodule Language.TextModifier do
 	end
 
 	defp mark_up_word(word, original) do
-		{"span", [{"title", original}, {"id", "phoenix_translated_value"}], [" " <> word.replacement <> " "]}
+		replacement = retain_formatting(word.replacement, original)
+		{"span", [{"title", original}, {"id", "phoenix_translated_value"}], [" " <> replacement <> " "]}
+	end
+
+	defp retain_formatting(replacement, original) do
+		# We endeavor to match the original's punctuation and capitalisation as much as possible.
+		retain_capitalisation(replacement, original)
+		|> retain_non_word_characters(original)	
+	end
+
+	defp retain_capitalisation(replacement, original) do
+		# For capitalisation, we ignore all non-letter characters and only consider
+		# the cases that make obvious sense (ie, given 'first' should be translated to
+		# 'tahi', there's no clear way to retain the capitalisation of 'fIrst', 'fiRst', 
+		# 'fiRST', etc)
+		cond do
+			# original is completely upper case
+			String.match?(original, ~r{^[\W_\dA-Z]+$}) -> String.upcase(replacement)
+
+			# original is completely lower case
+			String.match?(original, ~r{^[\W_\da-z]+$}) -> String.downcase(replacement)
+
+			# original starts with upper case
+			String.match?(original, ~r{^[\W_\dA-Z]}) -> String.capitalize(replacement)
+
+			# original starts with lower case
+			String.match?(original, ~r{^[\W_\da-z]}) -> 
+				(String.first(replacement) |> String.upcase()) <> String.slice(replacement, 1..-1)
+		end
+	end
+
+	defp retain_non_word_characters(replacement, original) do
+		# As with capitalisations, it only really makes sense to retain the pre- and post- non word
+		# characters.
+		matches = Regex.named_captures(~r{^(?<start>[\W_\d]*).*?(?<end>[\W_\d]*)$}, original)
+		matches["start"] <> replacement <> matches["end"]
 	end
 
 	defp calculate_original_word_count({_normalised, word}) do
@@ -102,6 +137,6 @@ defmodule Language.TextModifier do
 
 	defp normalise_string(str) do
 		String.downcase(str)
-		|> String.replace(~r{\W}, "")
+		|> String.replace(~r{\W|_|\d}, "")
 	end
 end
