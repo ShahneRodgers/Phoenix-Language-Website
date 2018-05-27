@@ -9,35 +9,37 @@ defmodule Language.TextModifierTest do
 		{:ok, [user: user.id]}
 	end
 
-	describe "Simple word translation" do
+	describe "simple word translation" do
 		setup [:create_word]
 
 		test "translates single word", %{user: id, original: orig, updated: updated} do
 			obs = TextModifier.get_update_function(id).(orig)
 			|> Floki.raw_html
-			assert obs == expected_html(orig, updated)
+
+			assert_result(obs, orig, updated)
 		end
 
 		test "ignores case", %{user: id, original: orig, updated: updated} do
 			obs = TextModifier.get_update_function(id).(String.upcase(orig))
 			|> Floki.raw_html
 
-			assert String.downcase(obs) == String.downcase(expected_html(String.upcase(orig), String.upcase(updated)))
+			assert_result(String.downcase(obs), String.downcase(orig), String.downcase(updated))
 		end
 
 		test "retains capitalization", %{user: id, original: orig, updated: updated} do
 			obs = TextModifier.get_update_function(id).(String.capitalize(orig))
 			|> Floki.raw_html
-			assert obs == expected_html(String.capitalize(orig), String.capitalize(updated))
+			
+			assert_result(obs, String.capitalize(orig), String.capitalize(updated))
 		end
 
 		test "keeps punctuation", %{user: id, original: orig, updated: updated} do
-			text = "$_" <> orig <> "!"
+			text = "%_" <> orig <> "!"
 
 			obs = TextModifier.get_update_function(id).(text)
 			|> Floki.raw_html
 
-			assert obs == expected_html(text, "$_" <> updated <> "!")
+			assert_result(obs, text, "%_" <> updated <> "!")
 		end
 
 		test "ignores punctuation inside word", %{user: id, original: orig, updated: updated} do
@@ -46,7 +48,7 @@ defmodule Language.TextModifierTest do
 			obs = TextModifier.get_update_function(id).(text)
 			|> Floki.raw_html
 
-			assert obs == expected_html(text, updated)
+			assert_result(obs, text, updated)
 		end
 
 		test "doesn't translate unknown word", %{user: id} do
@@ -58,7 +60,7 @@ defmodule Language.TextModifierTest do
 			obs = TextModifier.get_update_function(id).("Some sentence containing #{orig}")
 			|> Floki.raw_html
 
-			assert obs == "Some sentence containing " <> expected_html(orig, updated)
+			assert_result(obs, "Some sentence containing " <> expected_html(orig, updated))
 		end
 
 		test "translates every matching word in the sentence", %{user: id, original: orig, updated: updated} do
@@ -67,7 +69,7 @@ defmodule Language.TextModifierTest do
 
 			orig_translated = expected_html(orig, updated)
 
-			assert obs == "Some #{orig_translated}sentence #{orig_translated}containing #{orig_translated}"
+			assert_result(obs, "Some #{orig_translated}sentence #{orig_translated}containing #{orig_translated}")
 		end
 
 		test "translates all matching words in sentence", %{user: id, original: orig, updated: updated} do
@@ -76,8 +78,7 @@ defmodule Language.TextModifierTest do
 			obs = TextModifier.get_update_function(id).("Some sentence with #{orig} and second")
 			|> Floki.raw_html
 
-			assert obs == "Some sentence with " <> expected_html(orig, updated) <> "and " <>
-				expected_html("second", "tuarua")
+			assert_result(obs, "Some sentence with #{expected_html(orig, updated)}and #{expected_html("second", "tuarua")}")
 		end
 	end
 
@@ -87,13 +88,13 @@ defmodule Language.TextModifierTest do
 		test "translates phrase", %{user: id, original: orig, updated: updated} do
 			obs = TextModifier.get_update_function(id).(orig)
 			|> Floki.raw_html
-			assert obs == expected_html(orig, updated)
+			assert_result(obs, orig, updated)
 		end
 
 		test "translates phrase in sentence",  %{user: id, original: orig, updated: updated} do
 			obs = TextModifier.get_update_function(id).("Some phrase containing #{orig}")
 			|> Floki.raw_html
-			assert obs == "Some phrase containing " <> expected_html(orig, updated)
+			assert_result(obs, "Some phrase containing #{expected_html(orig, updated)}")
 		end
 
 		test "translates phrase multiple times in sentence", %{user: id, original: orig, updated: updated} do
@@ -102,13 +103,13 @@ defmodule Language.TextModifierTest do
 
 			orig_translated = expected_html(orig, updated)
 
-			assert obs == "#{orig_translated}phrase #{orig_translated}containing #{orig_translated}"
+			assert_result(obs, "#{orig_translated}phrase #{orig_translated}containing #{orig_translated}")
 		end
 
 		test "ignores case", %{user: id, original: orig, updated: updated} do
 			obs = TextModifier.get_update_function(id).(String.upcase(orig))
 			|> Floki.raw_html
-			assert String.downcase(obs) == String.downcase(expected_html(String.upcase(orig), String.upcase(updated)))
+			assert_result(String.downcase(obs), String.downcase(orig), String.downcase(updated))
 		end
 
 		test "does nothing for split phrase", %{user: id, original: orig} do
@@ -117,7 +118,7 @@ defmodule Language.TextModifierTest do
 			obs = TextModifier.get_update_function(id).(expected)
 				  |> Floki.raw_html
 
-			assert String.trim(obs) == expected
+			assert_result(obs, "\s?#{expected}\s?")
 		end
 
 		test "split only by non-letters", %{user: id, original: orig, updated: updated} do
@@ -126,7 +127,7 @@ defmodule Language.TextModifierTest do
 			obs = TextModifier.get_update_function(id).(text)
 				|> Floki.raw_html
 
-			assert obs == expected_html(text, updated)
+			assert_result(obs, text, updated)
 		end
 	end
 
@@ -139,8 +140,15 @@ defmodule Language.TextModifierTest do
 	end
 
 	defp expected_html(original_word, new_word) do
-		"<span title=\"" <> original_word <> "\" id=\"phoenix_translated_value\"> " <> 
-		new_word <> " </span>"
+		"<span title=\"#{original_word}\" class=\"phoenix_translated_value\"> #{new_word} .*?<\/span>"
+	end
+
+	defp assert_result(observed, original_word, new_word) do
+		assert_result(observed, expected_html(original_word, new_word))
+	end
+
+	defp assert_result(observed, expected) do
+		assert Regex.match?(~r/^#{expected}$/, observed)
 	end
 
 	defp create_word(_context) do

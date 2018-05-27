@@ -102,6 +102,16 @@ defmodule Language.ExternalSiteTest do
     assert result == "<html><body><p>THIS <i>IS</i> HOPEFULLY A <b>BETTER</b> TEST OF </p> HTML</body></html>"
   end
 
+  test "Update site adds additional javascript or css links" do
+    html = "<html><head><link rel=\"stylesheet\" href=\"test.com\"></head></html>"
+
+    result = ExternalSite.update_site("www.site.com", html, 
+      %{:update_visible_links => &assert_false/1, :update_visible_text => &assert_false/1},
+      [{"link", [{"rel", "stylesheet"}, {"href", "local"}], []}])
+
+    assert result =~ "<link rel=\"stylesheet\" href=\"local\""
+  end
+
   defp assert_string_equal_ignore_space(observed, expected) do
     assert String.replace(observed, ~r/\n\t/, "") == String.replace(expected, ~r/\n\t/, "")
   end

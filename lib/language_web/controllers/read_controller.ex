@@ -9,7 +9,8 @@ defmodule LanguageWeb.ReadController do
 			{:ok, content} ->
 				value = ExternalSite.update_site(site, content, 
 					%{update_visible_links: &create_local_link/1, 
-					update_visible_text: TextModifier.get_update_function(conn.assigns[:user])})
+					update_visible_text: TextModifier.get_update_function(conn.assigns[:user])},\
+					get_resources_links(conn))
 				html(conn, value)
 			{:error, message} ->
 				put_flash(conn, :error, message)
@@ -25,7 +26,17 @@ defmodule LanguageWeb.ReadController do
 		render conn, "start.html"
 	end
 
-	def create_local_link(url) do
+	defp create_local_link(url) do
 		read_path(LanguageWeb.Endpoint, :browse, site: url)
+	end
+
+	defp get_resources_links(conn) do
+		[{"link", [{"rel", "stylesheet"}, {"href", static_path(conn, "/css/readview.css")}], []},
+		{"script", [{"src", static_path(conn, "/js/readview.js")}], []},
+		{"script", [], ["""
+		document.addEventListener('DOMContentLoaded', function() {
+			require("js/readview.js").init();
+		}, false);
+		"""]}]
 	end
 end

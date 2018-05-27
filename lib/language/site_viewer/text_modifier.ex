@@ -92,8 +92,29 @@ defmodule Language.TextModifier do
 	end
 
 	defp mark_up_word(word, original) do
-		replacement = retain_formatting(word.replacement, original)
-		{"span", [{"title", original}, {"id", "phoenix_translated_value"}], [" " <> replacement <> " "]}
+		replacement = " " <> retain_formatting(word.replacement, original) <> " "
+		child_nodes = [replacement] ++ create_additional_info_div(word, original)
+		{"span", [{"title", original}, {"class", "phoenix_translated_value"}], child_nodes}
+	end
+
+	defp create_additional_info_div(word, original) do
+		nodes = [{"p", [{"class", "phoenix_translated_original"}], [original]}]
+
+		nodes = nodes ++ list_of_element_or_empty_if_nil(word.audio, 
+			{"a", [{"href", word.audio}, {"class", "phoenix_translated_audio_link"}], "Listen"})
+
+		nodes = nodes ++ list_of_element_or_empty_if_nil(word.notes, 
+			{"p", [{"class", "phoenix_translated_notes"}], [word.notes]})
+
+		{"div", [{"class", "phoenix_translated_additional_info"}], nodes}
+	end
+
+	defp list_of_element_or_empty_if_nil(val, element) do
+		if is_nil(val) do
+			[]
+		else
+			[element]
+		end
 	end
 
 	defp retain_formatting(replacement, original) do

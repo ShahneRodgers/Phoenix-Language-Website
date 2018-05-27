@@ -15,25 +15,33 @@ defmodule Language.ExternalSite do
 		end
 	end
 
-	def update_site(original_url, site_content, %{:update_visible_links => _func, :update_visible_text => _func2 } = update_functions) do
+	def update_site(original_url, site_content, 
+		%{:update_visible_links => _func, :update_visible_text => _func2 } = update_functions, 
+		html_head_resources \\ []) when is_list(html_head_resources) do
 		#  We need the base site requested so that we can fix relative urls
 		URI.parse(original_url)
-		|> parse_html(site_content, update_functions)
+		|> parse_html(site_content, update_functions, html_head_resources)
 	end
 
-	defp parse_html(site, page, update_functions) do
+	defp parse_html(site, page, update_functions, html_head_resources) do
 		Floki.parse(page)
-		|> mapped_html(site, update_functions)
+		|> mapped_html(site, update_functions, html_head_resources)
 		|> Floki.raw_html
 	end
 
-	defp mapped_html({name, attributes, value}, site, update_functions) do
-		if name == "html" do
-			{name, attributes, Enum.map(value, fn(value) -> mapped_html(value, site, update_functions) end)}
-		else
-			# References to resources (ie, html elements in <head>) should use direct
-			# urls rather than being redirected through this website.
-			{name, attributes, Enum.map(value, fn(val) -> update_html(site, update_functions, name=="body", val) end)}
+	defp mapped_html(html_nodes, site, update_functions, html_head_resources) when is_list(html_nodes) do
+		Enum.map(html_nodes, fn(node) -> mapped_html(node, site, update_functions, html_head_resources) end)
+	end
+
+	defp mapped_html({:comment, str}, _site, _update_functions, _html_head_resources) do
+		{:comment, str}
+	end
+
+	defp mapped_html({name, attributes, value}, site, update_functions, html_head_resources) do
+		case name do
+			"html" -> {name, attributes, Enum.map(value, fn(value) -> mapped_html(value, site, update_functions, html_head_resources) end)}
+			"head" -> {name, attributes, (Enum.map(value, fn(val) -> update_html(site, update_functions, false, val) end) ++ html_head_resources )}
+			_ -> {name, attributes, Enum.map(value, fn(val) -> update_html(site, update_functions, name=="body", val) end)}
 		end
 	end
 

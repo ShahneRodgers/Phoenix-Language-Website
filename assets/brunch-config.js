@@ -2,7 +2,13 @@ exports.config = {
   // See http://brunch.io/#documentation for docs.
   files: {
     javascripts: {
-      joinTo: "js/app.js"
+      joinTo: {
+        "js/app.js": ["js/*", "!js/readview.js", "node_modules/phoenix*/priv/static/*"],
+        "js/readview.js": "js/readview.js"
+      },
+      order: {
+        after: ["web/static/js/app.js"]
+      }
 
       // To use a separate vendor.js bundle, specify two files path
       // http://brunch.io/docs/config#-files-
@@ -20,10 +26,16 @@ exports.config = {
       // }
     },
     stylesheets: {
-      joinTo: "css/app.css"
-    },
-    templates: {
-      joinTo: "js/app.js"
+      joinTo: {
+        "css/app.css": ["css/*", "!css/readview.css"],
+        "css/readview.css": "css/readview.css"
+      },
+      order: {
+        after: ["web/static/css/app.css"] // concat app.css last
+      }
+    // },
+    // templates: {
+    //   joinTo: "js/app.js"
     }
   },
 
