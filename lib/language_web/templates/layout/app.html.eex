@@ -7,7 +7,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Hello Language!</title>
+    <title>Vocab Learning</title>
     <link rel="stylesheet" href="<%= static_path(@conn, "/css/app.css") %>">
   </head>
 
@@ -16,7 +16,15 @@
       <header class="header">
         <nav role="navigation">
           <ul class="nav nav-pills pull-right">
-            <li><a href="http://www.phoenixframework.org/docs">Get Started</a></li>
+            <%= if @conn.assigns[:user] do %>
+              <li><a href="<%= read_path(@conn, :start)%>">Get Started</a></li>
+              <li><a href="<%= session_path(@conn, :logout)%>">Logout</a></li>
+              <li><a href="<%= word_list_path(@conn, :index)%>">View your vocab</a></li>
+              <li><a href="<%= word_list_path(@conn, :new)%>">Create a new wordlist</a></li>
+            <% else %>
+              <li><a href="<%= session_path(@conn, :login)%>">Login</a></li>
+              <li><a href="<%= user_path(@conn, :new)%>">Sign up</a></li>
+            <% end %>
           </ul>
         </nav>
         <span class="logo"></span>

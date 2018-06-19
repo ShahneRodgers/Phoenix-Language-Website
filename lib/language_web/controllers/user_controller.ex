@@ -19,7 +19,7 @@ defmodule LanguageWeb.UserController do
       {:ok, user} ->
         conn
         |> put_flash(:info, "User created successfully.")
-        |> redirect(to: user_path(conn, :show, user))
+        |> redirect(to: session_path(conn, :login))
       {:error, %Ecto.Changeset{} = changeset} ->
         render(conn, "new.html", changeset: changeset)
     end

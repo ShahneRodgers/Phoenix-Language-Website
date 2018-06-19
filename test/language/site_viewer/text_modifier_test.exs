@@ -131,12 +131,47 @@ defmodule Language.TextModifierTest do
 		end
 	end
 
-	describe "Word translation with audio link" do
-		
+	test "Word translation includes audio link", %{user: id} do
+		TestHelpers.create_word("original", "updated", "some:audio:link")
+
+		obs = TextModifier.get_update_function(id).("original")
+			|> Floki.raw_html
+
+		assert_result(obs, ".+<audio src=\"some:audio:link\" .+")
 	end
 
-	describe "Word translation with notes" do
-		
+	test "Word translation doesn't include empty audio link", %{user: id} do
+		TestHelpers.create_word("original", "updated")
+
+		obs = TextModifier.get_update_function(id).("original")
+			|> Floki.raw_html
+
+		refute obs =~ "audio"
+	end
+
+	test "Word translation includes notes", %{user: id} do
+		TestHelpers.create_word("original", "updated", nil, "some notes")
+
+		obs = TextModifier.get_update_function(id).("original")
+			|> Floki.raw_html
+
+		assert_result(obs, ".+<p class=\"phoenix_translated_notes\">some notes</p>.+")
+	end
+
+	test "Word translation doesn't include empty notes link", %{user: id} do
+		TestHelpers.create_word("original", "updated", nil, nil)
+
+		obs = TextModifier.get_update_function(id).("original")
+			|> Floki.raw_html
+
+		refute obs =~ "notes"
+	end
+
+	test "Handles no vocab", %{user: id} do
+		text = "Just check it doesn't blow up from assuming the user has vocab"
+		obs = TextModifier.get_update_function(id).(text)
+
+		assert obs == [text]
 	end
 
 	defp expected_html(original_word, new_word) do

@@ -10,12 +10,16 @@ defmodule Language.TextModifier do
 		|> create_update_function()
 	end
 
-	defp create_update_function(word_map) do
+	defp create_update_function(word_map) when is_map(word_map) and map_size(word_map) > 0 do
 		max_word_count = Enum.max_by(word_map, &calculate_original_word_count/1)
 						|> calculate_original_word_count
 		fn(value) -> 
 			translate(word_map, value, max_word_count)
 		end
+	end
+
+	defp create_update_function(word_map) do
+		fn(value) -> [value] end
 	end
 
 	defp translate(word_map, original, max_word_count) do
@@ -101,7 +105,7 @@ defmodule Language.TextModifier do
 		nodes = [{"p", [{"class", "phoenix_translated_original"}], [original]}]
 
 		nodes = nodes ++ list_of_element_or_empty_if_nil(word.audio, 
-			{"a", [{"href", word.audio}, {"class", "phoenix_translated_audio_link"}], "Listen"})
+			{"audio", [{"src", word.audio}, {"class", "phoenix_translated_audio_link"}, "controls"], "Listen"})
 
 		nodes = nodes ++ list_of_element_or_empty_if_nil(word.notes, 
 			{"p", [{"class", "phoenix_translated_notes"}], [word.notes]})

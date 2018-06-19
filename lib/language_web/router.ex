@@ -28,6 +28,8 @@ defmodule LanguageWeb.Router do
     get "/login", SessionController, :login
     post "/login", SessionController, :login
     get "/logout", SessionController, :logout
+    get "/signup", UserController, :new
+    post "/create", UserController, :create
   end
 
   scope "/", LanguageWeb do
@@ -38,9 +40,9 @@ defmodule LanguageWeb.Router do
   end
 
   scope "/", LanguageWeb do
-    pipe_through :browser # :authenticate_admin
+    pipe_through :authenticate_admin
 
-    resources "/users", UserController
+    resources "/users", UserController, except: [:new, :create]
   end
 
   scope "/vocab", LanguageWeb do

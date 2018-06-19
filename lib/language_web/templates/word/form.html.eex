@@ -25,7 +25,7 @@
 
   <div class="form-group">
     <%= label f, :audio, class: "control-label" %>
-    <%= text_input f, :audio, class: "form-control" %>
+    <%= url_input f, :audio, class: "form-control" %>
     <%= error_tag f, :audio %>
   </div>
 

@@ -4,12 +4,31 @@ unobtrusive embedded resources) */
 	color: green;
 	display: inline-block;
 	position: relative;
+	margin: inherit;
 }
 
 .phoenix_translated_additional_info {
 	display: none;
 	color: black;
-	background-color: #fefefe;
+	background-color: #eeeeee;
 	box-shadow: 0px 8px 16px 0px rgba(0,0.2,0.2,0.2);
 	position: absolute;
+	z-index: 1;
+}
+
+.phoenix_translated_original {
+	text-align: center;
+	text-decoration: underline;
+	font-size: large;
+	font-style: bold;
+}
+
+.phoenix_translated_notes {
+	text-align: justify;
+	font-style: italic;
+}
+
+.phoenix_translated_audio_link {
+	display: block;
+	margin: 10px;
 }
