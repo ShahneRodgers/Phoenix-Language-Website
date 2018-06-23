@@ -1,7 +1,7 @@
 defmodule LanguageWeb.Router do
   use LanguageWeb, :router
 
-  alias LanguageWeb.Plugs.Authentication
+  alias Language.Accounts.Pipeline
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -13,21 +13,15 @@ defmodule LanguageWeb.Router do
 
   pipeline :authenticate do
     plug :browser
-    plug Authentication, level: :user
-  end
-
-  pipeline :authenticate_admin do
-    plug :authenticate
-    plug Authentication, level: :admin
+    plug Pipeline
   end
 
   scope "/", LanguageWeb do
     pipe_through :browser # Use the default browser stack
 
-    get "/", PageController, :index
-    get "/login", SessionController, :login
-    post "/login", SessionController, :login
-    get "/logout", SessionController, :logout
+    get "/login", AuthenticationController, :login
+    post "/login", AuthenticationController, :login
+    get "/logout", AuthenticationController, :logout
     get "/signup", UserController, :new
     post "/create", UserController, :create
   end
@@ -35,13 +29,9 @@ defmodule LanguageWeb.Router do
   scope "/", LanguageWeb do
     pipe_through :authenticate 
 
-    get "/browse", ReadController, :browse
     get "/start", ReadController, :start
-  end
-
-  scope "/", LanguageWeb do
-    pipe_through :authenticate_admin
-
+    get "/", ReadController, :start
+    get "/browse", ReadController, :browse
     resources "/users", UserController, except: [:new, :create]
   end
 

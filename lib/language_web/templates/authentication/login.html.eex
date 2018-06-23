@@ -1,6 +1,6 @@
 <h2>Login</h2>
 
-<%= form_for @conn, session_path(@conn, :login),  fn f -> %>
+<%= form_for @conn, authentication_path(@conn, :login),  fn f -> %>
 	Username: <%= text_input f, :username %>
 	<br/>
 	Password: <%= password_input f, :password %>

@@ -45,6 +45,7 @@ defmodule Language.Mixfile do
       {:floki, "~> 0.20.0"},
       {:comeonin, "~> 4.0"},
       {:bcrypt_elixir, "~> 1.0"},
+      {:guardian, "~> 1.0"},
       {:mock, "~> 0.3.0", only: :test}
     ]
   end

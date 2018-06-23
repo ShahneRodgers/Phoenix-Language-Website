@@ -1,15 +1,15 @@
 defmodule LanguageWeb.ReadController do
 	use LanguageWeb, :controller
 
-	alias Language.ExternalSite
-	alias Language.TextModifier
+	alias Language.{ExternalSite, TextModifier}
 
 	def browse(conn, %{"site" => site}) do
 		case ExternalSite.get_site(site) do
 			{:ok, content} ->
+				user = Guardian.Plug.current_resource(conn)
 				value = ExternalSite.update_site(site, content, 
 					%{update_visible_links: &create_local_link/1, 
-					update_visible_text: TextModifier.get_update_function(conn.assigns[:user])},\
+					update_visible_text: TextModifier.get_update_function(user.id)},\
 					get_resources_links(conn))
 				html(conn, value)
 			{:error, message} ->

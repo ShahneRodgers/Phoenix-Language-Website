@@ -16,13 +16,15 @@
       <header class="header">
         <nav role="navigation">
           <ul class="nav nav-pills pull-right">
-            <%= if @conn.assigns[:user] do %>
+            <% user = Guardian.Plug.current_resource(@conn) %>
+            <%= if user do %>
               <li><a href="<%= read_path(@conn, :start)%>">Get Started</a></li>
-              <li><a href="<%= session_path(@conn, :logout)%>">Logout</a></li>
+              <li><a href="<%= authentication_path(@conn, :logout)%>">Logout</a></li>
               <li><a href="<%= word_list_path(@conn, :index)%>">View your vocab</a></li>
               <li><a href="<%= word_list_path(@conn, :new)%>">Create a new wordlist</a></li>
+              <li><a href="<%= user_path(@conn, :show, user.id)%>">View your profile</a></li>
             <% else %>
-              <li><a href="<%= session_path(@conn, :login)%>">Login</a></li>
+              <li><a href="<%= authentication_path(@conn, :login)%>">Login</a></li>
               <li><a href="<%= user_path(@conn, :new)%>">Sign up</a></li>
             <% end %>
           </ul>

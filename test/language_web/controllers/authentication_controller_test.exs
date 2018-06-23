@@ -1,9 +1,7 @@
-defmodule LanguageWeb.SessionControllerTest do
+defmodule LanguageWeb.AuthenticationControllerTest do
   use LanguageWeb.ConnCase
 
   alias Language.TestHelpers
-
-  alias Language.SessionHelper
 
   setup do
     user = TestHelpers.ensure_user()
@@ -24,22 +22,27 @@ defmodule LanguageWeb.SessionControllerTest do
     end
 
     test "succeeds", %{conn: conn, user: user} do
+      assert is_nil(Guardian.Plug.current_resource(conn))
+
       password = TestHelpers.get_raw_test_user_password()
       
       conn = post(conn, "/login", %{"username": user.username, "password": password})
       assert redirected_to(conn) =~ "/browse"
 
-      assert SessionHelper.get_valid_session(conn) != nil
+      refute is_nil(Guardian.Plug.current_resource(conn))
     end
   end
 
   describe "Logout" do
     test "logged in", %{conn: conn} do
       conn = TestHelpers.act_as_user(conn)
-      |> get("/logout")
+
+      refute is_nil(Guardian.Plug.current_resource(conn))
+      
+      conn = get conn, "/logout"
 
       assert redirected_to(conn) =~ "/login"
-      assert is_nil(SessionHelper.get_valid_session(conn))
+      assert is_nil(Guardian.Plug.current_resource(conn))
     end
 
     test "not logged in", %{conn: conn} do

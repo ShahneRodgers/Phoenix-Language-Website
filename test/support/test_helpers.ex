@@ -7,23 +7,38 @@ defmodule Language.TestHelpers do
 	require Phoenix.ConnTest
 	require ExUnit.Assertions
 
-	# The default endpoint for testing
-    @endpoint LanguageWeb.Endpoint
-
+    @user "testuser"
     @password "testpassword"
 
+    @user2 "testuser2"
+    @password2 "password2"
+
+    @admin "admin"
+    @admin_password "admin_password"
+
 	def ensure_user() do
-		user = Accounts.find_by_username("testuser")
+		user = Accounts.find_by_username(@user)
 		if user do
 			user
 		else
-			{:ok, user} = Accounts.create_user(%{email: "someemail@test.com", username: "testuser", password: @password})
-			user
+			password = Comeonin.Bcrypt.hashpwsalt(@password)
+			Repo.insert! %Accounts.User{email: "someemail@test.com", username: @user, password: password}
 		end
 	end
 
 	def ensure_other_user do
-		Repo.insert! %Accounts.User{email: "test@test.com", username: "testuser2", password: "password2"}
+		Repo.insert! %Accounts.User{email: "test@test.com", username: @user2, password: @password2}
+	end
+
+	def ensure_admin do
+		user = Accounts.find_by_username(@admin)
+		if user do
+			user
+		else
+			user = Repo.insert! %Accounts.User{email: "admin@domain.com", username: @admin, password: @admin_password}
+			Repo.insert! %Accounts.Admin{user_id: user.id}
+			user
+		end
 	end
 
 	def get_raw_test_user_password() do
@@ -31,11 +46,13 @@ defmodule Language.TestHelpers do
 	end
 
 	def act_as_user(conn) do
-		ensure_user()
-		conn = Phoenix.ConnTest.post(conn, "/login", %{"username" => "testuser", "password" => "testpassword"})
-		|> Phoenix.ConnTest.recycle
+		user = ensure_user()
+		Accounts.Guardian.Plug.sign_in(conn, user)
+	end
 
-		conn
+	def act_as_admin(conn) do
+		user = ensure_admin()
+		Accounts.Guardian.Plug.sign_in(conn, user)
 	end
 
 	def create_word_list(user) do
@@ -53,5 +70,15 @@ defmodule Language.TestHelpers do
 
 		Repo.insert! %Vocab.Word{native: native, replacement: replacement, 
 					audio: audio, notes: notes, word_list_id: word_list.id}
+	end
+
+	def reauth_as_user(conn) do
+		Phoenix.ConnTest.recycle(conn)
+		|> act_as_user()
+	end
+
+	def reauth_as_admin(conn) do
+		Phoenix.ConnTest.recycle(conn)
+		|> act_as_admin()
 	end
 end

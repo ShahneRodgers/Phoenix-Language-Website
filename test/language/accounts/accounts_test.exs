@@ -2,6 +2,7 @@ defmodule Language.AccountsTest do
   use Language.DataCase
 
   alias Language.Accounts
+  alias Language.TestHelpers
 
   describe "users" do
     alias Language.Accounts.User
@@ -74,6 +75,19 @@ defmodule Language.AccountsTest do
     test "find_by_username/1 returns nil if missing" do
       user_fixture()
       assert Accounts.find_by_username("missing") == nil
+    end
+
+  end
+
+  describe "is_admin?" do
+    test "false for normal user" do
+      user = user_fixture()
+      assert Accounts.is_admin?(user.id) == false
+    end
+
+    test "true for admin" do
+      admin = TestHelpers.ensure_admin()
+      assert Accounts.is_admin?(admin.id) == true
     end
   end
 end

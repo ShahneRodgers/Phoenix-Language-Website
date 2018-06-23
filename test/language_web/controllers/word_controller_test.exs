@@ -35,7 +35,8 @@ defmodule LanguageWeb.WordControllerTest do
       assert %{id: id} = redirected_params(conn)
       assert redirected_to(conn) == word_path(conn, :show, id)
 
-      conn = get conn, word_path(conn, :show, id)
+      conn = TestHelpers.reauth_as_user(conn)
+              |> get(word_path(conn, :show, id))
       assert html_response(conn, 200) =~ "Show Word"
     end
 
@@ -61,7 +62,8 @@ defmodule LanguageWeb.WordControllerTest do
       conn = put conn, word_path(conn, :update, word), word: get_attributes(@update_attrs, context)
       assert redirected_to(conn) == word_path(conn, :show, word)
 
-      conn = get conn, word_path(conn, :show, word)
+      conn = TestHelpers.reauth_as_user(conn)
+            |>  get(word_path(conn, :show, word))
       assert html_response(conn, 200) =~ "some updated audio"
     end
 
@@ -77,6 +79,8 @@ defmodule LanguageWeb.WordControllerTest do
     test "deletes chosen word", %{conn: conn, word: word} do
       conn = delete conn, word_path(conn, :delete, word)
       assert redirected_to(conn) == word_path(conn, :index)
+
+      conn = TestHelpers.reauth_as_user(conn)
       assert_error_sent 404, fn ->
         get conn, word_path(conn, :show, word)
       end
@@ -88,7 +92,7 @@ defmodule LanguageWeb.WordControllerTest do
     {:ok, word: word}
   end
 
-  defp get_attributes(attrs, context) do
-    Enum.into(%{word_list_id: context[:word_list_id]}, attrs)
+  defp get_attributes(attrs, %{word_list_id: id}) do
+    Enum.into(%{word_list_id: id}, attrs)
   end
 end

@@ -4,11 +4,14 @@ defmodule LanguageWeb.WordListController do
   alias Language.Vocab
   alias Language.Vocab.WordList
 
+  require Logger
+
   plug :authorise_wordlist when action in [:show, :edit, :update, :delete]
 
   defp authorise_wordlist(conn, _) do
     list = Vocab.get_word_list(conn.params["id"])
-    if list == nil or list.user_id != conn.assigns[:user] do
+
+    if list == nil or list.user_id != get_user_id(conn) do
       put_status(conn, 404)
       |> render(LanguageWeb.ErrorView, "404.html")
       |> halt()
@@ -17,8 +20,13 @@ defmodule LanguageWeb.WordListController do
     end
   end
 
+  defp get_user_id(conn) do
+    Guardian.Plug.current_resource(conn).id
+  end
+
   def index(conn, _) do
-    word_lists = Vocab.list_users_wordlists(conn.assigns[:user])
+    word_lists = get_user_id(conn)
+    |> Vocab.list_users_wordlists()
     render(conn, "index.html", word_lists: word_lists)
   end
 
@@ -28,7 +36,7 @@ defmodule LanguageWeb.WordListController do
   end
 
   def create(conn, %{"word_list" => list_params}) do
-    params = Enum.into(%{"user_id" => conn.assigns[:user]}, list_params)
+    params = Enum.into(%{"user_id" => get_user_id(conn)}, list_params)
 
     case Vocab.create_word_list(params) do
       {:ok, word} ->
@@ -53,7 +61,7 @@ defmodule LanguageWeb.WordListController do
 
   def update(conn, %{"id" => id, "word_list" => word_list_params}) do
     word_list = Vocab.get_word_list!(id)
-    word_list_params = Enum.into(%{"user_id" => conn.assigns[:user]}, word_list_params)
+    word_list_params = Enum.into(%{"user_id" => get_user_id(conn)}, word_list_params)
 
     case Vocab.update_word_list(word_list, word_list_params) do
       {:ok, word_list} ->
@@ -61,6 +69,7 @@ defmodule LanguageWeb.WordListController do
         |> put_flash(:info, "Word list updated successfully.")
         |> redirect(to: word_list_path(conn, :show, word_list))
       {:error, %Ecto.Changeset{} = changeset} ->
+        Logger.info "Failed to update word list"
         render(conn, "edit.html", word_list: word_list, changeset: changeset)
     end
   end

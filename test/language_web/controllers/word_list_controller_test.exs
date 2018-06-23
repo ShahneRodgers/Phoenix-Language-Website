@@ -9,7 +9,7 @@ defmodule LanguageWeb.WordListControllerTest do
 
   setup %{conn: conn} do
     conn = TestHelpers.act_as_user(conn)
-    |> recycle
+
     {:ok, [conn: conn]}
   end
 
@@ -67,7 +67,8 @@ defmodule LanguageWeb.WordListControllerTest do
       assert %{id: id} = redirected_params(conn)
       assert redirected_to(conn) == word_list_path(conn, :show, id)
 
-      conn = get(conn, word_list_path(conn, :show, id))
+      conn = TestHelpers.reauth_as_user(conn)
+              |> get(word_list_path(conn, :show, id))
       assert html_response(conn, 200) =~ @create_attrs.title
     end
 
@@ -93,7 +94,8 @@ defmodule LanguageWeb.WordListControllerTest do
       conn = put(conn, word_list_path(conn, :update, word_list), word_list: @update_attrs)
       assert redirected_to(conn) == word_list_path(conn, :show, word_list)
 
-      conn = get(conn, word_list_path(conn, :show, word_list))
+      conn = TestHelpers.reauth_as_user(conn)
+              |> get(word_list_path(conn, :show, word_list))
       assert html_response(conn, 200) =~ @update_attrs.summary
     end
 
@@ -109,8 +111,9 @@ defmodule LanguageWeb.WordListControllerTest do
     test "delete user owned word_list", %{conn: conn, word_list: word_list} do
       conn = delete(conn, word_list_path(conn, :delete, word_list))
       assert redirected_to(conn) == word_list_path(conn, :index)
-      
-      conn = get(conn, word_list_path(conn, :show, word_list))
+
+      conn = TestHelpers.reauth_as_user(conn)
+              |> get(word_list_path(conn, :show, word_list))
       assert response(conn, 404)
     end
   end

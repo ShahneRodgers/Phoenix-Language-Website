@@ -7,6 +7,7 @@ defmodule Language.Accounts do
   alias Language.Repo
 
   alias Language.Accounts.User
+  alias Language.Accounts.Admin
 
   @doc """
   Returns the list of users.
@@ -109,5 +110,20 @@ defmodule Language.Accounts do
   """
   def change_user(%User{} = user) do
     User.changeset(user, %{})
+  end
+
+  @doc """
+  Checks if a user is an admin.
+
+  ## Examples
+
+      iex> is_admin?(35)
+      false
+      iex> is_admin?(user.id)
+      true
+  """
+  def is_admin?(id) do
+    admin = Repo.get_by(Admin, user_id: id)
+    not is_nil(admin)
   end
 end
