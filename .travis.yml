@@ -1,2 +1,7 @@
 language: elixir
+
+notifications:
+  email: false
+
 elixir: '1.6'
+otp_release: '20.2'
