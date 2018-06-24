@@ -1,3 +1,6 @@
+
+[![Build status](https://travis-ci.org/ShahneRodgers/Phoenix-Language-Website.svg?branch=master)](https://travis-ci.org/ShahneRodgers/Phoenix-Language-Website)
+
 # Language
 
 To start your Phoenix server:
