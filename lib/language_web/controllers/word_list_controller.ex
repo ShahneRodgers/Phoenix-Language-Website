@@ -6,7 +6,7 @@ defmodule LanguageWeb.WordListController do
 
   require Logger
 
-  plug :authorise_wordlist when action in [:show, :edit, :update, :delete]
+  plug(:authorise_wordlist when action in [:show, :edit, :update, :delete])
 
   defp authorise_wordlist(conn, _) do
     list = Vocab.get_word_list(conn.params["id"])
@@ -25,8 +25,10 @@ defmodule LanguageWeb.WordListController do
   end
 
   def index(conn, _) do
-    word_lists = get_user_id(conn)
-    |> Vocab.list_users_wordlists()
+    word_lists =
+      get_user_id(conn)
+      |> Vocab.list_users_wordlists()
+
     render(conn, "index.html", word_lists: word_lists)
   end
 
@@ -43,6 +45,7 @@ defmodule LanguageWeb.WordListController do
         conn
         |> put_flash(:info, "Word list created successfully.")
         |> redirect(to: word_list_path(conn, :show, word))
+
       {:error, %Ecto.Changeset{} = changeset} ->
         render(conn, "new.html", changeset: changeset)
     end
@@ -68,8 +71,9 @@ defmodule LanguageWeb.WordListController do
         conn
         |> put_flash(:info, "Word list updated successfully.")
         |> redirect(to: word_list_path(conn, :show, word_list))
+
       {:error, %Ecto.Changeset{} = changeset} ->
-        Logger.info "Failed to update word list"
+        Logger.info("Failed to update word list")
         render(conn, "edit.html", word_list: word_list, changeset: changeset)
     end
   end

@@ -6,7 +6,7 @@ defmodule LanguageWeb.UserController do
 
   require Logger
 
-  plug :authorise_user when action not in [:new, :create]
+  plug(:authorise_user when action not in [:new, :create])
 
   defp authorise_user(%Plug.Conn{params: %{"id" => id}} = conn, _) do
     authorise_user_impl(conn, id)
@@ -18,10 +18,11 @@ defmodule LanguageWeb.UserController do
 
   defp authorise_user_impl(conn, req_id \\ nil) do
     user = Guardian.Plug.current_resource(conn)
+
     cond do
       is_nil(user) -> fail_authentication(conn)
       not is_nil(req_id) and Integer.to_string(user.id) == req_id -> conn
-      Accounts.is_admin? user.id -> conn
+      Accounts.is_admin?(user.id) -> conn
       true -> fail_authentication(conn)
     end
   end
@@ -49,6 +50,7 @@ defmodule LanguageWeb.UserController do
         |> put_flash(:info, "User created successfully.")
         |> Accounts.Guardian.Plug.sign_in(user)
         |> redirect(to: read_path(conn, :start))
+
       {:error, %Ecto.Changeset{} = changeset} ->
         render(conn, "new.html", changeset: changeset)
     end
@@ -73,6 +75,7 @@ defmodule LanguageWeb.UserController do
         conn
         |> put_flash(:info, "User updated successfully.")
         |> redirect(to: user_path(conn, :show, user))
+
       {:error, %Ecto.Changeset{} = changeset} ->
         render(conn, "edit.html", user: user, changeset: changeset)
     end

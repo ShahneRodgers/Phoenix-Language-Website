@@ -11,7 +11,7 @@ defmodule Language.Application do
       # Start the Ecto repository
       supervisor(Language.Repo, []),
       # Start the endpoint when the application starts
-      supervisor(LanguageWeb.Endpoint, []),
+      supervisor(LanguageWeb.Endpoint, [])
       # Start your own worker by calling: Language.Worker.start_link(arg1, arg2, arg3)
       # worker(Language.Worker, [arg1, arg2, arg3]),
     ]

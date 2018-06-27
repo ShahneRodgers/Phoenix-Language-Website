@@ -11,13 +11,13 @@ defmodule LanguageWeb.AuthenticationControllerTest do
 
   describe "Login" do
     test "incorrect username", %{conn: conn} do
-      conn = post(conn, "/login", %{"username": "test", "password": "a"})
+      conn = post(conn, "/login", %{username: "test", password: "a"})
       assert get_flash(conn, :warning) == "Incorrect username or password"
       assert html_response(conn, 200) =~ "Login"
     end
 
     test "incorrect password", %{conn: conn, user: user} do
-      conn = post(conn, "/login", %{"username": user.username, "password": "a"})
+      conn = post(conn, "/login", %{username: user.username, password: "a"})
       assert get_flash(conn, :warning) == "Incorrect username or password"
     end
 
@@ -25,8 +25,8 @@ defmodule LanguageWeb.AuthenticationControllerTest do
       assert is_nil(Guardian.Plug.current_resource(conn))
 
       password = TestHelpers.get_raw_test_user_password()
-      
-      conn = post(conn, "/login", %{"username": user.username, "password": password})
+
+      conn = post(conn, "/login", %{username: user.username, password: password})
       assert redirected_to(conn) =~ "/browse"
 
       refute is_nil(Guardian.Plug.current_resource(conn))
@@ -38,8 +38,8 @@ defmodule LanguageWeb.AuthenticationControllerTest do
       conn = TestHelpers.act_as_user(conn)
 
       refute is_nil(Guardian.Plug.current_resource(conn))
-      
-      conn = get conn, "/logout"
+
+      conn = get(conn, "/logout")
 
       assert redirected_to(conn) =~ "/login"
       assert is_nil(Guardian.Plug.current_resource(conn))

@@ -5,6 +5,7 @@ defmodule LanguageWeb.AuthenticationController do
 
   def login(conn, %{"username" => username, "password" => password}) do
     matching_user = Accounts.find_by_username(username)
+
     if matching_user do
       if Comeonin.Bcrypt.checkpw(password, matching_user.password) do
         Accounts.Guardian.Plug.sign_in(conn, matching_user)

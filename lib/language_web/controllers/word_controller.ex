@@ -15,6 +15,7 @@ defmodule LanguageWeb.WordController do
         conn
         |> put_flash(:info, "Word created successfully.")
         |> redirect(to: word_path(conn, :show, word))
+
       {:error, %Ecto.Changeset{} = changeset} ->
         render(conn, "new.html", changeset: changeset)
     end
@@ -39,6 +40,7 @@ defmodule LanguageWeb.WordController do
         conn
         |> put_flash(:info, "Word updated successfully.")
         |> redirect(to: word_path(conn, :show, word))
+
       {:error, %Ecto.Changeset{} = changeset} ->
         render(conn, "edit.html", word: word, changeset: changeset)
     end

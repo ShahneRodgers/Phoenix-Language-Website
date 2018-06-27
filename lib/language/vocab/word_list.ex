@@ -5,10 +5,10 @@ defmodule Language.Vocab.WordList do
   alias Language.Vocab.Word
 
   schema "wordlists" do
-    field :title, :string
-    field :summary, :string
-    has_many :words, Word
-    belongs_to :user, Language.Accounts.User
+    field(:title, :string)
+    field(:summary, :string)
+    has_many(:words, Word)
+    belongs_to(:user, Language.Accounts.User)
 
     timestamps()
   end

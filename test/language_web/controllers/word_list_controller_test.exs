@@ -19,7 +19,7 @@ defmodule LanguageWeb.WordListControllerTest do
     test "shows users word lists", %{conn: conn, word_list: word_list} do
       conn = get(conn, word_list_path(conn, :index))
       body = html_response(conn, 200)
-      assert String.contains? body, word_list.title
+      assert String.contains?(body, word_list.title)
     end
   end
 
@@ -28,8 +28,8 @@ defmodule LanguageWeb.WordListControllerTest do
 
     test "does not show other users word lists", %{conn: conn, non_owned_word_list: list} do
       conn = get(conn, word_list_path(conn, :index))
-      body =  html_response(conn, 200)
-      assert not String.contains? body, list.title
+      body = html_response(conn, 200)
+      assert not String.contains?(body, list.title)
     end
   end
 
@@ -49,12 +49,15 @@ defmodule LanguageWeb.WordListControllerTest do
     end
 
     test "redirects to not found for non-existing word list", %{conn: conn} do
-      conn = get(conn, word_list_path(conn, :show, 1997893))
+      conn = get(conn, word_list_path(conn, :show, 1_997_893))
 
       assert response(conn, 404)
     end
 
-    test "redirects to not found for other users' word list", %{conn: conn, non_owned_word_list: word_list} do
+    test "redirects to not found for other users' word list", %{
+      conn: conn,
+      non_owned_word_list: word_list
+    } do
       conn = get(conn, word_list_path(conn, :show, word_list.id))
       assert response(conn, 404)
     end
@@ -67,8 +70,10 @@ defmodule LanguageWeb.WordListControllerTest do
       assert %{id: id} = redirected_params(conn)
       assert redirected_to(conn) == word_list_path(conn, :show, id)
 
-      conn = TestHelpers.reauth_as_user(conn)
-              |> get(word_list_path(conn, :show, id))
+      conn =
+        TestHelpers.reauth_as_user(conn)
+        |> get(word_list_path(conn, :show, id))
+
       assert html_response(conn, 200) =~ @create_attrs.title
     end
 
@@ -94,8 +99,10 @@ defmodule LanguageWeb.WordListControllerTest do
       conn = put(conn, word_list_path(conn, :update, word_list), word_list: @update_attrs)
       assert redirected_to(conn) == word_list_path(conn, :show, word_list)
 
-      conn = TestHelpers.reauth_as_user(conn)
-              |> get(word_list_path(conn, :show, word_list))
+      conn =
+        TestHelpers.reauth_as_user(conn)
+        |> get(word_list_path(conn, :show, word_list))
+
       assert html_response(conn, 200) =~ @update_attrs.summary
     end
 
@@ -112,8 +119,10 @@ defmodule LanguageWeb.WordListControllerTest do
       conn = delete(conn, word_list_path(conn, :delete, word_list))
       assert redirected_to(conn) == word_list_path(conn, :index)
 
-      conn = TestHelpers.reauth_as_user(conn)
-              |> get(word_list_path(conn, :show, word_list))
+      conn =
+        TestHelpers.reauth_as_user(conn)
+        |> get(word_list_path(conn, :show, word_list))
+
       assert response(conn, 404)
     end
   end
@@ -135,8 +144,9 @@ defmodule LanguageWeb.WordListControllerTest do
   end
 
   defp create_non_owned_word_list(_) do
-    word_list = TestHelpers.ensure_other_user()
-    |> TestHelpers.create_word_list
+    word_list =
+      TestHelpers.ensure_other_user()
+      |> TestHelpers.create_word_list()
 
     {:ok, [non_owned_word_list: word_list]}
   end
@@ -146,5 +156,4 @@ defmodule LanguageWeb.WordListControllerTest do
 
     {:ok, [word_list: word_list]}
   end
-    
 end

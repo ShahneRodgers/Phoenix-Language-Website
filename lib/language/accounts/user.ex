@@ -2,11 +2,10 @@ defmodule Language.Accounts.User do
   use Ecto.Schema
   import Ecto.Changeset
 
-
   schema "users" do
-    field :email, :string
-    field :password, :string
-    field :username, :string
+    field(:email, :string)
+    field(:password, :string)
+    field(:username, :string)
 
     timestamps()
   end
@@ -24,7 +23,7 @@ defmodule Language.Accounts.User do
     |> put_pass_hash
   end
 
-  defp put_pass_hash(%Ecto.Changeset{ valid?: true, changes: %{password: password}} = changeset) do
+  defp put_pass_hash(%Ecto.Changeset{valid?: true, changes: %{password: password}} = changeset) do
     put_change(changeset, :password, Comeonin.Bcrypt.hashpwsalt(password))
   end
 

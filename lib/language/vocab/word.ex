@@ -4,13 +4,12 @@ defmodule Language.Vocab.Word do
 
   alias Language.Vocab.WordList
 
-
   schema "words" do
-    field :audio, :string
-    field :native, :string
-    field :notes, :string
-    field :replacement, :string
-    belongs_to :word_list, WordList
+    field(:audio, :string)
+    field(:native, :string)
+    field(:notes, :string)
+    field(:replacement, :string)
+    belongs_to(:word_list, WordList)
 
     timestamps()
   end

@@ -8,7 +8,11 @@ defmodule Language.AccountsTest do
     alias Language.Accounts.User
 
     @valid_attrs %{email: "email@test.com", password: "some password", username: "some username"}
-    @update_attrs %{email: "some@updated.email", password: "some updated password", username: "some updated username"}
+    @update_attrs %{
+      email: "some@updated.email",
+      password: "some updated password",
+      username: "some updated username"
+    }
     @invalid_attrs %{email: nil, password: nil, username: nil}
 
     def user_fixture(attrs \\ %{}) do
@@ -76,7 +80,6 @@ defmodule Language.AccountsTest do
       user_fixture()
       assert Accounts.find_by_username("missing") == nil
     end
-
   end
 
   describe "is_admin?" do

@@ -1,0 +1,5 @@
+#!/bin/sh
+
+PATH=$PATH:/usr/local/bin
+
+mix format mix.exs "lib/**/*.{ex,exs}" "test/**/*.{ex,exs}"

@@ -6,64 +6,82 @@ defmodule Language.ExternalSiteTest do
   alias Language.ExternalSite
 
   defp get_http_poison_response(status_code, body) do
-  	%HTTPoison.Response{status_code: status_code, body: body}
+    %HTTPoison.Response{status_code: status_code, body: body}
   end
 
   test "HTTP get returns 200 code" do
-  	content = "<html></html>"
-  	with_mock HTTPoison, [get: fn(_url) -> {:ok, get_http_poison_response(200, content)} end] do
-  		# Check content is correctly returned.
-  		assert {:ok, ^content} = ExternalSite.get_site("http://example.com")
-  		# And that HTTPoison is called with the correct parameters.
-  		assert called HTTPoison.get("http://example.com")
-  	end
+    content = "<html></html>"
+
+    with_mock HTTPoison, get: fn _url -> {:ok, get_http_poison_response(200, content)} end do
+      # Check content is correctly returned.
+      assert {:ok, ^content} = ExternalSite.get_site("http://example.com")
+      # And that HTTPoison is called with the correct parameters.
+      assert called(HTTPoison.get("http://example.com"))
+    end
   end
 
   test "HTTP get returns 404 code" do
-  	with_mock HTTPoison, [get: fn(_url) -> {:ok, get_http_poison_response(404, "not found")} end] do
-  		assert {:error, "The site returned a 404 response"} = ExternalSite.get_site("notfound.site")
-  		assert called HTTPoison.get("notfound.site")
-  	end
+    with_mock HTTPoison, get: fn _url -> {:ok, get_http_poison_response(404, "not found")} end do
+      assert {:error, "The site returned a 404 response"} = ExternalSite.get_site("notfound.site")
+      assert called(HTTPoison.get("notfound.site"))
+    end
   end
 
   test "Site does not return" do
-  	with_mock HTTPoison, [get: fn(_url) -> {:error, "ignored"} end] do
-  		assert {:error, "The site could not be reached"} = ExternalSite.get_site("dsf")
-  	end
+    with_mock HTTPoison, get: fn _url -> {:error, "ignored"} end do
+      assert {:error, "The site could not be reached"} = ExternalSite.get_site("dsf")
+    end
   end
 
   test "Update site does not change head with no relative urls" do
-  	html = "<html><head><title class=\"something\"> test</title>" <> 
-      "<style id=\"some_id\"></style><meta name=\"ResourceLoaderDynamicStyles\" content=\"\"/>" <>
-  	  "<link rel=\"stylesheet\" href=\"www.somesite.com\"/>" <> 
-      "<meta name=\"generator\" content=\"MediaWiki 1.31.0-wmf.27\"/><script>Some script</script>" <>
-  	  "<base>Some base</base></head></html>"
+    html =
+      "<html><head><title class=\"something\"> test</title>" <>
+        "<style id=\"some_id\"></style><meta name=\"ResourceLoaderDynamicStyles\" content=\"\"/>" <>
+        "<link rel=\"stylesheet\" href=\"www.somesite.com\"/>" <>
+        "<meta name=\"generator\" content=\"MediaWiki 1.31.0-wmf.27\"/><script>Some script</script>" <>
+        "<base>Some base</base></head></html>"
 
-  	result = ExternalSite.update_site("original_url", html, 
-  		%{:update_visible_links => &assert_false/1, :update_visible_text => &assert_false/1 })
-  	assert_string_equal_ignore_space(result, html)
+    result =
+      ExternalSite.update_site("original_url", html, %{
+        :update_visible_links => &assert_false/1,
+        :update_visible_text => &assert_false/1
+      })
+
+    assert_string_equal_ignore_space(result, html)
   end
 
   test "Update site fixes relative urls" do
-  	html = "<html><head><link rel=\"stylesheet\" href=\"/some/path\"/>" <> 
-           "<img a=\"//test.com\"/></head></html>"
+    html =
+      "<html><head><link rel=\"stylesheet\" href=\"/some/path\"/>" <>
+        "<img a=\"//test.com\"/></head></html>"
 
-  	result = ExternalSite.update_site("https://original_url.co.nz/initial/path/", html, 
-  		%{:update_visible_links => &assert_false/1, :update_visible_text => &assert_false/1 })
+    result =
+      ExternalSite.update_site("https://original_url.co.nz/initial/path/", html, %{
+        :update_visible_links => &assert_false/1,
+        :update_visible_text => &assert_false/1
+      })
 
-    assert_string_equal_ignore_space(result, "<html><head><link rel=\"stylesheet\"" <>
-      " href=\"https://original_url.co.nz/some/path\"/><img a=\"https://test.com\"/>" <>
-      "</head></html>")
+    assert_string_equal_ignore_space(
+      result,
+      "<html><head><link rel=\"stylesheet\"" <>
+        " href=\"https://original_url.co.nz/some/path\"/><img a=\"https://test.com\"/>" <>
+        "</head></html>"
+    )
   end
 
   test "Update site updates body urls" do
-    html = "<html><body><p href=\"//abso.lute.url\"></p><a href=\"/relativepath\"></a></body></html>"
+    html =
+      "<html><body><p href=\"//abso.lute.url\"></p><a href=\"/relativepath\"></a></body></html>"
 
-    result = ExternalSite.update_site("https://original_url.co.nz/initial/path/", html, 
-      %{:update_visible_links => fn value -> "mysite:" <> value end, :update_visible_text => &assert_false/1 })
+    result =
+      ExternalSite.update_site("https://original_url.co.nz/initial/path/", html, %{
+        :update_visible_links => fn value -> "mysite:" <> value end,
+        :update_visible_text => &assert_false/1
+      })
 
-    expected = String.replace(html, "//abso.lute.url", "mysite:https://abso.lute.url")
-    |> String.replace("/relativepath", "mysite:https://original_url.co.nz/relativepath")
+    expected =
+      String.replace(html, "//abso.lute.url", "mysite:https://abso.lute.url")
+      |> String.replace("/relativepath", "mysite:https://original_url.co.nz/relativepath")
 
     assert_string_equal_ignore_space(result, expected)
   end
@@ -71,8 +89,11 @@ defmodule Language.ExternalSiteTest do
   test "Update site ignores image urls" do
     html = "<html><body><img src=\"/someimg\" alt=\"text\"/></body></html>"
 
-    result = ExternalSite.update_site("https://original_url.com", html,
-      %{:update_visible_links => fn _ -> "This shouldn't happen" end, :update_visible_text => &assert_false/1})
+    result =
+      ExternalSite.update_site("https://original_url.com", html, %{
+        :update_visible_links => fn _ -> "This shouldn't happen" end,
+        :update_visible_text => &assert_false/1
+      })
 
     expected = String.replace(html, "/someimg", "https://original_url.com/someimg")
 
@@ -80,12 +101,15 @@ defmodule Language.ExternalSiteTest do
   end
 
   test "Update site updates body text" do
-    html = "<html><head><title>This is a title</title></head>" <> 
-    "<body><p id=\"some id\">This is a paragraph</p></body></html>"
+    html =
+      "<html><head><title>This is a title</title></head>" <>
+        "<body><p id=\"some id\">This is a paragraph</p></body></html>"
 
-    result = ExternalSite.update_site("www.site.com", html,
-      %{:update_visible_links => &assert_false/1, 
-      :update_visible_text => fn value -> "!Updated #{value} !" end})
+    result =
+      ExternalSite.update_site("www.site.com", html, %{
+        :update_visible_links => &assert_false/1,
+        :update_visible_text => fn value -> "!Updated #{value} !" end
+      })
 
     expected = String.replace(html, "This is a paragraph", "!Updated This is a paragraph !")
 
@@ -93,21 +117,29 @@ defmodule Language.ExternalSiteTest do
   end
 
   test "Update site updates marked-up body text" do
-    html = "<html><body><p>This <i>is</i> hopefully a <b>better</b> test of </p> html</body></html>"
+    html =
+      "<html><body><p>This <i>is</i> hopefully a <b>better</b> test of </p> html</body></html>"
 
-    result = ExternalSite.update_site("www.site.com", html,
-      %{:update_visible_links => &assert_false/1, 
-      :update_visible_text => fn value -> String.upcase(value) end})
+    result =
+      ExternalSite.update_site("www.site.com", html, %{
+        :update_visible_links => &assert_false/1,
+        :update_visible_text => fn value -> String.upcase(value) end
+      })
 
-    assert result == "<html><body><p>THIS <i>IS</i> HOPEFULLY A <b>BETTER</b> TEST OF </p> HTML</body></html>"
+    assert result ==
+             "<html><body><p>THIS <i>IS</i> HOPEFULLY A <b>BETTER</b> TEST OF </p> HTML</body></html>"
   end
 
   test "Update site adds additional javascript or css links" do
     html = "<html><head><link rel=\"stylesheet\" href=\"test.com\"></head></html>"
 
-    result = ExternalSite.update_site("www.site.com", html, 
-      %{:update_visible_links => &assert_false/1, :update_visible_text => &assert_false/1},
-      [{"link", [{"rel", "stylesheet"}, {"href", "local"}], []}])
+    result =
+      ExternalSite.update_site(
+        "www.site.com",
+        html,
+        %{:update_visible_links => &assert_false/1, :update_visible_text => &assert_false/1},
+        [{"link", [{"rel", "stylesheet"}, {"href", "local"}], []}]
+      )
 
     assert result =~ "<link rel=\"stylesheet\" href=\"local\""
   end
@@ -117,7 +149,6 @@ defmodule Language.ExternalSiteTest do
   end
 
   defp assert_false(_value) do
-  	assert false
+    assert false
   end
-
 end

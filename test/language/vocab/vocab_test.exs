@@ -7,8 +7,18 @@ defmodule Language.VocabTest do
   describe "words" do
     alias Language.Vocab.Word
 
-    @valid_attrs %{audio: "http://www.audiofiles.com/f.mp3", native: "some native", notes: "some notes", replacement: "some replacement"}
-    @update_attrs %{audio: "ftp://audio_file.mp3", native: "some updated native", notes: "some updated notes", replacement: "some updated replacement"}
+    @valid_attrs %{
+      audio: "http://www.audiofiles.com/f.mp3",
+      native: "some native",
+      notes: "some notes",
+      replacement: "some replacement"
+    }
+    @update_attrs %{
+      audio: "ftp://audio_file.mp3",
+      native: "some updated native",
+      notes: "some updated notes",
+      replacement: "some updated replacement"
+    }
     @invalid_attrs %{audio: nil, native: nil, notes: nil, replacement: nil}
 
     def word_fixture(attrs \\ %{}) do
@@ -98,7 +108,7 @@ defmodule Language.VocabTest do
         |> Enum.into(@valid_attrs)
         |> Vocab.create_word_list()
 
-      %{word_list | words: [] }
+      %{word_list | words: []}
     end
 
     test "list_wordlists/0 returns all wordlists" do
@@ -112,18 +122,24 @@ defmodule Language.VocabTest do
     end
 
     test "create_word_list/1 with valid data creates a word_list" do
-      assert {:ok, %WordList{} = word_list} = Vocab.create_word_list(get_word_list_attr(@valid_attrs))
+      assert {:ok, %WordList{} = word_list} =
+               Vocab.create_word_list(get_word_list_attr(@valid_attrs))
+
       assert word_list.summary == @valid_attrs.summary
       assert word_list.title == @valid_attrs.title
     end
 
     test "create_word_list/1 with invalid data returns error changeset" do
-      assert {:error, %Ecto.Changeset{}} = Vocab.create_word_list(get_word_list_attr(@invalid_attrs))
+      assert {:error, %Ecto.Changeset{}} =
+               Vocab.create_word_list(get_word_list_attr(@invalid_attrs))
     end
 
     test "update_word_list/2 with valid data updates the word_list" do
       word_list = word_list_fixture()
-      assert {:ok, word_list} = Vocab.update_word_list(word_list, get_word_list_attr(@update_attrs))
+
+      assert {:ok, word_list} =
+               Vocab.update_word_list(word_list, get_word_list_attr(@update_attrs))
+
       assert %WordList{} = word_list
       assert word_list.summary == @update_attrs.summary
       assert word_list.title == @update_attrs.title
@@ -131,7 +147,10 @@ defmodule Language.VocabTest do
 
     test "update_word_list/2 with invalid data returns error changeset" do
       word_list = word_list_fixture()
-      assert {:error, %Ecto.Changeset{}} = Vocab.update_word_list(word_list, get_word_list_attr(@invalid_attrs))
+
+      assert {:error, %Ecto.Changeset{}} =
+               Vocab.update_word_list(word_list, get_word_list_attr(@invalid_attrs))
+
       assert word_list == Vocab.get_word_list!(word_list.id)
     end
 
