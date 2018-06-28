@@ -6,8 +6,8 @@ config :language, LanguageWeb.Endpoint,
   http: [port: 4001],
   server: false
 
-# Print only warnings and errors during test
-config :logger, level: :warn
+# Print only errors during test
+config :logger, level: :error
 
 # Don't waste time with authentication when running tests
 config :bcrypt_elixir, :log_rounds, 4

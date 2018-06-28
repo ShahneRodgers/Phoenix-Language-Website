@@ -11,7 +11,15 @@ defmodule LanguageWeb.WordListController do
   defp authorise_wordlist(conn, _) do
     list = Vocab.get_word_list(conn.params["id"])
 
-    if list == nil or list.user_id != get_user_id(conn) do
+    user_id = get_user_id(conn)
+
+    if is_nil(list) or list.user_id != user_id do
+      if not is_nil(list) do
+        Logger.warn(fn ->
+          "#{user_id} attempted to access a word list owned by #{list.user_id}"
+        end)
+      end
+
       put_status(conn, 404)
       |> render(LanguageWeb.ErrorView, "404.html")
       |> halt()

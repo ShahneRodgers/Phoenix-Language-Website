@@ -4,6 +4,8 @@ defmodule LanguageWeb.WordController do
   alias Language.Vocab
   alias Language.Vocab.Word
 
+  require Logger
+
   plug(:authorise_word when action in [:show, :edit, :update, :delete, :create])
 
   defp authorise_word(%Plug.Conn{params: %{"word" => word_params}} = conn, _) do
@@ -12,6 +14,7 @@ defmodule LanguageWeb.WordController do
 
   defp authorise_word(%Plug.Conn{params: %{"id" => id}} = conn, _) do
     word = Vocab.get_word(id)
+
     if is_nil(word) do
       reply_bad_request(conn)
     else
@@ -29,6 +32,10 @@ defmodule LanguageWeb.WordController do
         reply_bad_request(conn)
 
       list.user_id != user_id ->
+        Logger.warn(fn ->
+          "#{user_id} attempted to access a word in list owned by #{list.user_id}"
+        end)
+
         reply_bad_request(conn)
 
       true ->

@@ -20,14 +20,18 @@ defmodule LanguageWeb.UserController do
     user = Guardian.Plug.current_resource(conn)
 
     cond do
-      is_nil(user) -> fail_authentication(conn)
+      is_nil(user) -> fail_authentication(conn, nil)
       not is_nil(req_id) and Integer.to_string(user.id) == req_id -> conn
       Accounts.is_admin?(user.id) -> conn
-      true -> fail_authentication(conn)
+      true -> fail_authentication(conn, user)
     end
   end
 
-  defp fail_authentication(conn) do
+  defp fail_authentication(conn, user) do
+    Logger.warn(fn ->
+      "#{inspect(user)} attempted to access #{conn.request_path} but failed authentication"
+    end)
+
     put_status(conn, 404)
     |> render(LanguageWeb.ErrorView, "404.html")
     |> halt()
@@ -46,6 +50,10 @@ defmodule LanguageWeb.UserController do
   def create(conn, %{"user" => user_params}) do
     case Accounts.create_user(user_params) do
       {:ok, user} ->
+        Logger.info(fn ->
+          "#{inspect(user)} was created"
+        end)
+
         conn
         |> put_flash(:info, "User created successfully.")
         |> Accounts.Guardian.Plug.sign_in(user)
@@ -84,6 +92,10 @@ defmodule LanguageWeb.UserController do
   def delete(conn, %{"id" => id}) do
     user = Accounts.get_user!(id)
     {:ok, _user} = Accounts.delete_user(user)
+
+    Logger.info(fn ->
+      "#{inspect(user)} was deleted by #{Guardian.Plug.current_resource(conn)}"
+    end)
 
     conn
     |> put_flash(:info, "User deleted successfully.")

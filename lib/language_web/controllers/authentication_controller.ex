@@ -3,6 +3,8 @@ defmodule LanguageWeb.AuthenticationController do
 
   alias Language.Accounts
 
+  require Logger
+
   def login(conn, %{"username" => username, "password" => password}) do
     matching_user = Accounts.find_by_username(username)
 
@@ -11,7 +13,7 @@ defmodule LanguageWeb.AuthenticationController do
         Accounts.Guardian.Plug.sign_in(conn, matching_user)
         |> redirect(to: read_path(conn, :browse))
       else
-        fail_login(conn)
+        fail_login(conn, username)
       end
     else
       # Still a risk of SQL timing attacks? 
@@ -28,6 +30,12 @@ defmodule LanguageWeb.AuthenticationController do
   def logout(conn, _) do
     Accounts.Guardian.Plug.sign_out(conn)
     |> redirect(to: authentication_path(conn, :login))
+  end
+
+  defp fail_login(conn, username) do
+    Logger.info(fn -> "An attempt to login as #{username} failed" end)
+
+    fail_login(conn)
   end
 
   defp fail_login(conn) do
