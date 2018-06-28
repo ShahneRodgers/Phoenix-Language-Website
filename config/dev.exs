@@ -56,3 +56,8 @@ config :language, Language.Repo,
   database: "language_dev",
   hostname: "localhost",
   pool_size: 10
+
+# Configuration for initialising the database (prod should use secret values stored in prod.secret.exs)
+config :language,
+  admin_username: "admin",
+  admin_password: "admin"

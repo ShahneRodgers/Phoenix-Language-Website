@@ -65,10 +65,6 @@ defmodule LanguageWeb.UserController do
           "#{inspect(user)} was created"
         end)
 
-        if user.id == 1 do
-          Accounts.make_admin(user)
-        end
-
         conn
         |> put_flash(:info, "User created successfully.")
         |> Accounts.Guardian.Plug.sign_in(user)
