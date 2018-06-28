@@ -34,6 +34,7 @@ defmodule LanguageWeb.Router do
     get("/", ReadController, :start)
     get("/browse", ReadController, :browse)
     resources("/users", UserController, except: [:new, :create])
+    get("/users/grant/admin", UserController, :make_admin)
   end
 
   scope "/vocab", LanguageWeb do

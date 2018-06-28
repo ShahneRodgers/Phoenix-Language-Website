@@ -6,7 +6,8 @@ defmodule LanguageWeb.UserController do
 
   require Logger
 
-  plug(:authorise_user when action not in [:new, :create])
+  plug(:authorise_user when action not in [:new, :create, :make_admin])
+  plug(:authorise_admin when action in [:make_admin])
 
   defp authorise_user(%Plug.Conn{params: %{"id" => id}} = conn, _) do
     authorise_user_impl(conn, id)
@@ -24,6 +25,16 @@ defmodule LanguageWeb.UserController do
       not is_nil(req_id) and Integer.to_string(user.id) == req_id -> conn
       Accounts.is_admin?(user.id) -> conn
       true -> fail_authentication(conn, user)
+    end
+  end
+
+  defp authorise_admin(conn, _) do
+    user = Guardian.Plug.current_resource(conn)
+
+    if Accounts.is_admin?(user.id) do
+      conn
+    else
+      fail_authentication(conn, user)
     end
   end
 
@@ -53,6 +64,10 @@ defmodule LanguageWeb.UserController do
         Logger.info(fn ->
           "#{inspect(user)} was created"
         end)
+
+        if user.id == 1 do
+          Accounts.make_admin(user)
+        end
 
         conn
         |> put_flash(:info, "User created successfully.")
@@ -100,5 +115,26 @@ defmodule LanguageWeb.UserController do
     conn
     |> put_flash(:info, "User deleted successfully.")
     |> redirect(to: user_path(conn, :index))
+  end
+
+  def make_admin(conn, %{"id" => id}) do
+    case Accounts.make_admin(Accounts.get_user!(id)) do
+      {:ok, _} ->
+        conn
+        |> put_flash(:info, "Admin successfully added.")
+        |> redirect(to: user_path(conn, :index))
+
+      {:error, :already_admin} ->
+        conn
+        |> put_flash(:warning, "User is already an admin.")
+        |> redirect(to: user_path(conn, :index))
+
+      {:error, _} ->
+        Logger.error("Could not make user an admin")
+
+        conn
+        |> put_flash(:error, "Could not make user an admin.")
+        |> redirect(to: user_path(conn, :index))
+    end
   end
 end

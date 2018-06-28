@@ -17,6 +17,8 @@ body, form, ul, table {
 /* Phoenix flash messages */
 .alert:empty { display: none; }
 
+.alert-warning{color:#e86400;background-color:#f4c700;border-color:#e8ae00}
+
 /* Custom page header */
 .header {
   border-bottom: 1px solid #e5e5e5;

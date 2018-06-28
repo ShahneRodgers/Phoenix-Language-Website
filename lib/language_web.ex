@@ -41,6 +41,7 @@ defmodule LanguageWeb do
       import LanguageWeb.Router.Helpers
       import LanguageWeb.ErrorHelpers
       import LanguageWeb.Gettext
+      import Language.Accounts
     end
   end
 

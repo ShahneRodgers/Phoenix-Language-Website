@@ -126,4 +126,17 @@ defmodule Language.Accounts do
     admin = Repo.get_by(Admin, user_id: id)
     not is_nil(admin)
   end
+
+  @doc """
+  Gives a given user admin permissions.
+
+  """
+  def make_admin(%User{} = user) do
+    if not is_admin?(user.id) do
+      %Admin{user_id: user.id}
+      |> Repo.insert()
+    else
+      {:error, :already_admin}
+    end
+  end
 end
