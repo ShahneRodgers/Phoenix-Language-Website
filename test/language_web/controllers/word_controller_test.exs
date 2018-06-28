@@ -21,14 +21,12 @@ defmodule LanguageWeb.WordControllerTest do
   setup %{conn: conn} do
     conn = TestHelpers.act_as_user(conn)
     word_list = TestHelpers.create_word_list()
-    {:ok, [word_list_id: word_list.id, conn: conn]}
-  end
 
-  def fixture(:word, context) do
-    attr = get_attributes(@create_attrs, context)
+    unowned_word_list =
+      TestHelpers.ensure_other_user()
+      |> TestHelpers.create_word_list()
 
-    {:ok, word} = Vocab.create_word(attr)
-    word
+    {:ok, [word_list_id: word_list.id, conn: conn, unowned_wl_id: unowned_word_list.id]}
   end
 
   describe "new word" do
@@ -56,19 +54,41 @@ defmodule LanguageWeb.WordControllerTest do
       conn = post(conn, word_path(conn, :create), word: get_attributes(@invalid_attrs, context))
       assert html_response(conn, 200) =~ "New Word"
     end
+
+    test "fails when attempting to add to inaccessible word list", %{
+      conn: conn,
+      unowned_wl_id: id
+    } do
+      conn =
+        post(
+          conn,
+          word_path(conn, :create),
+          word: get_attributes(@create_attrs, %{word_list_id: id})
+        )
+
+      assert html_response(conn, 400) =~ "Bad Request"
+    end
   end
 
   describe "edit word" do
-    setup [:create_word]
+    setup [:create_word, :create_unowned_word]
 
     test "renders form for editing chosen word", %{conn: conn, word: word} do
       conn = get(conn, word_path(conn, :edit, word))
       assert html_response(conn, 200) =~ "Edit Word"
     end
+
+    test "renders error when trying to access other user's word", %{
+      conn: conn,
+      unowned_word: word
+    } do
+      conn = get(conn, word_path(conn, :edit, word))
+      assert html_response(conn, 400) =~ "Bad Request"
+    end
   end
 
   describe "update word" do
-    setup [:create_word]
+    setup [:create_word, :create_unowned_word]
 
     test "redirects when data is valid", %{conn: conn, word: word} = context do
       conn =
@@ -89,26 +109,69 @@ defmodule LanguageWeb.WordControllerTest do
 
       assert html_response(conn, 200) =~ "Edit Word"
     end
+
+    test "renders error when word is updated to inaccessible wordlist", %{
+      conn: conn,
+      word: word,
+      unowned_wl_id: id
+    } do
+      conn =
+        put(
+          conn,
+          word_path(conn, :update, word),
+          word: get_attributes(@update_attrs, %{word_list_id: id})
+        )
+
+      assert html_response(conn, 400) =~ "Bad Request"
+    end
+
+    test "renders errors when word is always inaccessible", %{
+      conn: conn,
+      unowned_word: word,
+      unowned_wl_id: id
+    } do
+      conn =
+        put(
+          conn,
+          word_path(conn, :update, word),
+          word: get_attributes(@update_attrs, %{word_list_id: id})
+        )
+
+      assert html_response(conn, 400) =~ "Bad Request"
+    end
   end
 
   describe "delete word" do
-    setup [:create_word]
+    setup [:create_word, :create_unowned_word]
 
     test "deletes chosen word", %{conn: conn, word: word} do
       conn = delete(conn, word_path(conn, :delete, word))
       assert redirected_to(conn) == word_path(conn, :index)
 
-      conn = TestHelpers.reauth_as_user(conn)
+      conn =
+        TestHelpers.reauth_as_user(conn)
+        |> get(word_path(conn, :show, word))
 
-      assert_error_sent(404, fn ->
-        get(conn, word_path(conn, :show, word))
-      end)
+      assert html_response(conn, 400) =~ "Bad Request"
+    end
+
+    test "renders error if chosen word is not accessible", %{conn: conn, unowned_word: word} do
+      conn = delete(conn, word_path(conn, :delete, word))
+      assert html_response(conn, 400) =~ "Bad Request"
     end
   end
 
   defp create_word(context) do
-    word = fixture(:word, context)
+    attr = get_attributes(@create_attrs, context)
+
+    {:ok, word} = Vocab.create_word(attr)
     {:ok, word: word}
+  end
+
+  defp create_unowned_word(%{unowned_wl_id: word_list_id}) do
+    attr = get_attributes(@create_attrs, %{word_list_id: word_list_id})
+    {:ok, word} = Vocab.create_word(attr)
+    {:ok, unowned_word: word}
   end
 
   defp get_attributes(attrs, %{word_list_id: id}) do

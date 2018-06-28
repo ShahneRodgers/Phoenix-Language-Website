@@ -37,6 +37,10 @@ defmodule Language.Vocab do
   """
   def get_word!(id), do: Repo.get!(Word, id)
 
+  def get_word(id) do
+    Repo.get(Word, id)
+  end
+
   @doc """
   Creates a word.
 

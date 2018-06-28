@@ -20,7 +20,7 @@ defmodule Language.TextModifier do
     end
   end
 
-  defp create_update_function(word_map) do
+  defp create_update_function(_) do
     fn value -> [value] end
   end
 
