@@ -1,7 +1,7 @@
 defmodule LanguageWeb.Router do
   use LanguageWeb, :router
 
-  alias Language.Accounts.Pipeline
+  alias Language.Accounts.{MaybeAuthenticatedPipeline, AuthenticatedPipeline}
 
   pipeline :browser do
     plug(:accepts, ["html"])
@@ -13,18 +13,24 @@ defmodule LanguageWeb.Router do
 
   pipeline :authenticate do
     plug(:browser)
-    plug(Pipeline)
+    plug(AuthenticatedPipeline)
+  end
+
+  pipeline :maybe_authenticate do
+    plug(:browser)
+    plug(MaybeAuthenticatedPipeline)
   end
 
   scope "/", LanguageWeb do
     # Use the default browser stack
-    pipe_through(:browser)
+    pipe_through(:maybe_authenticate)
 
     get("/login", AuthenticationController, :login)
     post("/login", AuthenticationController, :login)
     get("/logout", AuthenticationController, :logout)
     get("/signup", UserController, :new)
     post("/create", UserController, :create)
+    get("/public", WordListController, :public)
   end
 
   scope "/", LanguageWeb do
@@ -42,5 +48,9 @@ defmodule LanguageWeb.Router do
 
     resources("/wordlists", WordListController)
     resources("/words", WordController)
+    get("/share/:id", WordListController, :share)
+    post("/share/:id", WordListController, :share)
+    get("/claim/:id", WordListController, :claim)
+    post("/claim/:id", WordListController, :claim)
   end
 end

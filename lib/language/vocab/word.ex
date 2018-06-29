@@ -19,5 +19,6 @@ defmodule Language.Vocab.Word do
     word
     |> cast(attrs, [:native, :replacement, :notes, :audio, :word_list_id])
     |> validate_required([:native, :replacement, :word_list_id])
+    |> foreign_key_constraint(:word_list_id)
   end
 end

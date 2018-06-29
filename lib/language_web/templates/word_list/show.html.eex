@@ -4,12 +4,13 @@
 
   <td class="text-right">
     <span><%= link "Edit", to: word_list_path(@conn, :edit, @word_list), class: "btn btn-default btn-xs" %></span>
-    <span><%= link "Delete", to: word_list_path(@conn, :delete, @word_list), method: :delete, data: [confirm: "Are you sure?"], class: "btn btn-danger btn-xs" %></span>
+    <span><%= link "Delete", to: word_list_path(@conn, :delete, @word_list), method: :delete, data: [confirm: "Are you sure you want to permanently delete this word list?"], class: "btn btn-danger btn-xs" %></span>
+    <span><%= link "Share", to: word_list_path(@conn, :share, @word_list), method: :post, data: [confirm: "Are you sure you want to make this word list permanently public?"], class: "btn btn-default btn-xs" %></span>
   </td>
 
 </h3>
 
-  <span id="summary"><%= @word_list.summary %>
+  <span id="summary"><%= @word_list.summary %></span>
 
   <h4>Words</h4>
 

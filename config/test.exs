@@ -22,3 +22,8 @@ config :language, Language.Repo,
   pool: Ecto.Adapters.SQL.Sandbox
 
 config :language, :environment, :test
+
+# Configuration for initialising the database (prod should use secret values stored in prod.secret.exs)
+config :language,
+  admin_username: "admin",
+  admin_password: "admin"

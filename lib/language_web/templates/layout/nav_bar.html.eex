@@ -14,5 +14,6 @@
     <li><a href="<%= authentication_path(@conn, :login)%>">Login</a></li>
     <li><a href="<%= user_path(@conn, :new)%>">Sign up</a></li>
     <% end %>
+    <li><a href="<%= word_list_path(@conn, :public)%>">View public word lists</a></li>
   </ul>
 </nav>

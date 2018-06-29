@@ -18,5 +18,6 @@ defmodule Language.Vocab.WordList do
     word_list
     |> cast(attrs, [:title, :summary, :user_id])
     |> validate_required([:title, :user_id])
+    |> foreign_key_constraint(:user_id)
   end
 end

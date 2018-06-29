@@ -1,0 +1,43 @@
+<h2>Public vocab lists</h2>
+
+<%= if @word_lists do %>
+  <%= for word_list <- @word_lists do %>
+    <div class="word_list">
+      <td class="text-right">
+      	<%= if Guardian.Plug.current_resource(@conn) do %>
+	    	<span><%= link "Add to my lists", to: word_list_path(@conn, :claim, word_list), class: "btn btn-default btn-xs" %></span>
+	    <% end %>
+	  </td>
+
+	  <h3><%= word_list.title %></h3>
+
+	  <span id="summary"><%= word_list.summary %></span>
+
+	  <h4>Words</h4>
+
+	  <table class="words_table">
+	    <thead>
+	      <tr>
+	        <th>Original</th>
+	        <th>Replacement</th>
+	        <th>Notes</th>
+	        <th></th>
+	      </tr>
+	    </thead>
+
+	    </tr>
+
+	    <tbody>
+	      <%= for word <- word_list.words do %>
+	        <tr>
+	          <td><%= word.native %></td>
+	          <td><%= word.replacement %></td>
+	          <td><%= word.notes %></td>
+	        </tr>
+	      <% end %>
+	    </tbody>
+	  </table>
+	</div>
+  <% end %>
+<% end %>
+

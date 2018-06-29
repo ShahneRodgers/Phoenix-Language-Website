@@ -16,3 +16,5 @@
 
 <span><%= link "Edit", to: user_path(@conn, :edit, @user) %></span>
 <span><%= link "Back", to: user_path(@conn, :index) %></span>
+
+<span><%= link "Delete", to: user_path(@conn, :delete, @user), method: :delete, data: [confirm: "Are you sure you want to delete your profile and all related vocab? There is no way to undo this action."], class: "btn btn-danger btn-xs"%></span>

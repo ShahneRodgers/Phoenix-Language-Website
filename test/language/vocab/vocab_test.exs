@@ -164,6 +164,45 @@ defmodule Language.VocabTest do
       word_list = word_list_fixture()
       assert %Ecto.Changeset{} = Vocab.change_word_list(word_list)
     end
+
+    test "copy_word_list/2 copies the word_list" do
+      word_list = word_list_fixture()
+      user = TestHelpers.ensure_other_user()
+      {:ok, changes} = Vocab.copy_word_list(word_list.id, user.id)
+
+      assert changes[:word_list].user_id == user.id
+      assert Enum.count(Vocab.list_wordlists()) == 2
+    end
+
+    test "copy_word_list/2 copies included words" do
+      word = word_fixture()
+      user = TestHelpers.ensure_other_user()
+      {:ok, changes} = Vocab.copy_word_list(word.word_list_id, user.id)
+
+      assert changes[:word] == 1
+
+      expected =
+        %{word | word_list_id: changes[:word_list].id}
+        |> Map.delete(:id)
+
+      observed =
+        Vocab.list_words_by_user(user.id)
+        |> List.first()
+        |> Map.delete(:id)
+
+      assert expected == observed
+    end
+
+    test "copy_word_list/2 returns error" do
+      word_list = word_list_fixture()
+
+      {:error, failed_operation, failed_value, changes_so_far} =
+        Vocab.copy_word_list(word_list.id, 234)
+
+      assert failed_operation == :word_list
+      assert failed_value.errors == [user_id: {"does not exist", []}]
+      assert changes_so_far == %{}
+    end
   end
 
   defp get_word_list_attr(attr) do

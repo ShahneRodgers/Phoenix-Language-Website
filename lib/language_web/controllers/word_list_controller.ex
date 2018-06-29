@@ -6,7 +6,7 @@ defmodule LanguageWeb.WordListController do
 
   require Logger
 
-  plug(:authorise_wordlist when action in [:show, :edit, :update, :delete])
+  plug(:authorise_wordlist when action in [:show, :edit, :update, :delete, :share])
 
   defp authorise_wordlist(conn, _) do
     list = Vocab.get_word_list(conn.params["id"])
@@ -20,8 +20,8 @@ defmodule LanguageWeb.WordListController do
         end)
       end
 
-      put_status(conn, 404)
-      |> render(LanguageWeb.ErrorView, "404.html")
+      put_status(conn, 400)
+      |> render(LanguageWeb.ErrorView, "400.html")
       |> halt()
     else
       conn
@@ -93,5 +93,55 @@ defmodule LanguageWeb.WordListController do
     conn
     |> put_flash(:info, "Word list deleted successfully.")
     |> redirect(to: word_list_path(conn, :index))
+  end
+
+  def share(conn, %{"id" => id}) do
+    case Vocab.copy_word_list(id, get_public_user_id()) do
+      {:ok, _changes} ->
+        conn
+        |> put_flash(:info, "Word list shared successfully.")
+        |> redirect(to: word_list_path(conn, :public))
+
+      {:error, _op, failed_value, _changes} ->
+        Logger.warn(fn ->
+          "User #{get_user_id(conn)} could not share word list #{id} due to #{
+            inspect(failed_value)
+          }"
+        end)
+
+        put_flash(conn, :error, "An unexpected error occurred.")
+        |> redirect(to: word_list_path(conn, :index))
+    end
+  end
+
+  def public(conn, _) do
+    word_lists = Vocab.list_users_wordlists(get_public_user_id())
+
+    render(conn, "public.html", word_lists: word_lists)
+  end
+
+  def claim(conn, %{"id" => id}) do
+    case Vocab.copy_word_list(id, get_user_id(conn)) do
+      {:ok, _} ->
+        conn
+        |> put_flash(:info, "Word list added to your vocab.")
+        |> redirect(to: word_list_path(conn, :index))
+
+      {:error, _op, failed_value, _changes} ->
+        Logger.warn(fn ->
+          "User #{get_user_id(conn)} could not claim word list #{id} due to #{
+            inspect(failed_value)
+          }"
+        end)
+
+        put_flash(conn, :error, "An unexpected error occurred.")
+        |> redirect(to: word_list_path(conn, :public))
+    end
+  end
+
+  defp get_public_user_id() do
+    # admin = Accounts.find_by_username(Application.get_env(:language, :admin_username))
+    # admin.id
+    Application.get_env(:language, :admin_id)
   end
 end

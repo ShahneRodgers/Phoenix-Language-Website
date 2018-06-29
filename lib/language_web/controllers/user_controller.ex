@@ -105,7 +105,11 @@ defmodule LanguageWeb.UserController do
     {:ok, _user} = Accounts.delete_user(user)
 
     Logger.info(fn ->
-      "#{inspect(user)} was deleted by #{Guardian.Plug.current_resource(conn)}"
+      current_user = Guardian.Plug.current_resource(conn)
+
+      "#{user.username} (#{user.user_id}) was deleted by #{current_user.username} (#{
+        current_user.id
+      })"
     end)
 
     conn

@@ -10,7 +10,7 @@
 # We recommend using the bang functions (`insert!`, `update!`
 # and so on) as they will fail if something goes wrong.
 
-defmodule SetUp do
+defmodule Language.Seeds do
 	def get_env(key) do
 		Application.get_env(:language, key)
 	end
@@ -19,8 +19,15 @@ defmodule SetUp do
 		get_env(key)
 		|> Comeonin.Bcrypt.hashpwsalt()
 	end
+
+	def call() do
+		admin_user = %Language.Accounts.User{username: get_env(:admin_username), password: get_password_env(:admin_password)}
+			|> Language.Repo.insert!()
+		Language.Repo.insert %Language.Accounts.Admin{user_id: admin_user.id}
+
+		Application.put_env(:language, :admin_id, admin_user.id)
+	end
 end
 
-admin_user = %Language.Accounts.User{username: SetUp.get_env(:admin_username), password: SetUp.get_password_env(:admin_password)}
-			|> Language.Repo.insert!()
-Language.Repo.insert %Language.Accounts.Admin{user_id: admin_user.id}
+
+Language.Seeds.call()

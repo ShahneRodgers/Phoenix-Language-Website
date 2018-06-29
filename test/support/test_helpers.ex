@@ -76,6 +76,11 @@ defmodule Language.TestHelpers do
     |> create_word_list
   end
 
+  def create_public_list() do
+    admin_id = Application.get_env(:language, :admin_id)
+    create_word_list(%{id: admin_id})
+  end
+
   def create_word(native, replacement, audio \\ nil, notes \\ nil) do
     user = ensure_user()
     word_list = create_word_list(user)

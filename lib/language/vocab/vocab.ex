@@ -4,6 +4,7 @@ defmodule Language.Vocab do
   """
 
   import Ecto.Query, warn: false
+  alias Ecto.Multi
   alias Language.Repo
 
   alias Language.Vocab.Word
@@ -240,5 +241,63 @@ defmodule Language.Vocab do
   """
   def change_word_list(%WordList{} = word_list) do
     WordList.changeset(word_list, %{})
+  end
+
+  @doc """
+  Copies a word list and all related entities to another user.
+
+  Returns {:ok, changes} or {:error, failed_operation, failed_value, changes_so_far}.
+
+  ## Examples
+    iex> copy_word_list(word_list, new_owner.id)
+    {:ok, ...} 
+  """
+  def copy_word_list(word_list_id, user_id) do
+    word_list = get_word_list(word_list_id)
+
+    if word_list do
+      copy_word_list_impl(word_list, user_id)
+    else
+      {:error, :word_list, %{errors: [word_list: {"does not exist"}]}, %{}}
+    end
+  end
+
+  defp copy_word_list_impl(%WordList{} = word_list, user_id) do
+    Map.delete(word_list, :id)
+    |> Map.delete(:user)
+
+    words = word_list.words
+
+    word_list =
+      WordList.changeset(%WordList{}, %{
+        title: word_list.title,
+        summary: word_list.summary,
+        user_id: user_id
+      })
+
+    Multi.new()
+    |> Multi.insert(:word_list, word_list)
+    |> Multi.run(:word, fn val -> copy_words(val, words) end)
+    |> Repo.transaction()
+  end
+
+  defp copy_words(%{word_list: word_list}, words) do
+    # Copy all the words belonging to the wordlist
+    words =
+      Enum.map(words, fn word ->
+        word = Map.delete(word, :id)
+
+        %{word | word_list_id: word_list.id}
+        |> Map.delete(:__meta__)
+        |> Map.delete(:word_list)
+        |> Map.from_struct()
+      end)
+
+    try do
+      {count, _} = Repo.insert_all(Word, words)
+      {:ok, count}
+    rescue
+      x -> {:error, x}
+    end
   end
 end

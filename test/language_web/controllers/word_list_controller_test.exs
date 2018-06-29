@@ -8,9 +8,9 @@ defmodule LanguageWeb.WordListControllerTest do
   @invalid_attrs %{title: nil, summary: nil}
 
   setup %{conn: conn} do
-    conn = TestHelpers.act_as_user(conn)
+    auth_conn = TestHelpers.act_as_user(conn)
 
-    {:ok, [conn: conn]}
+    {:ok, [conn: auth_conn, anonymous_conn: conn]}
   end
 
   describe "list word list" do
@@ -51,7 +51,7 @@ defmodule LanguageWeb.WordListControllerTest do
     test "redirects to not found for non-existing word list", %{conn: conn} do
       conn = get(conn, word_list_path(conn, :show, 1_997_893))
 
-      assert response(conn, 404)
+      assert response(conn, 400)
     end
 
     test "redirects to not found for other users' word list", %{
@@ -59,7 +59,7 @@ defmodule LanguageWeb.WordListControllerTest do
       non_owned_word_list: word_list
     } do
       conn = get(conn, word_list_path(conn, :show, word_list.id))
-      assert response(conn, 404)
+      assert response(conn, 400)
     end
   end
 
@@ -123,14 +123,14 @@ defmodule LanguageWeb.WordListControllerTest do
         TestHelpers.reauth_as_user(conn)
         |> get(word_list_path(conn, :show, word_list))
 
-      assert response(conn, 404)
+      assert response(conn, 400)
     end
   end
 
   test "delete non-existing word_list", %{conn: conn} do
     conn = delete(conn, word_list_path(conn, :delete, 1))
 
-    assert response(conn, 404)
+    assert response(conn, 400)
   end
 
   describe "delete wrong word list" do
@@ -139,7 +139,92 @@ defmodule LanguageWeb.WordListControllerTest do
     test "delete other user's word_list fails", %{conn: conn, non_owned_word_list: word_list} do
       conn = delete(conn, word_list_path(conn, :delete, word_list))
 
-      assert response(conn, 404)
+      assert response(conn, 400)
+    end
+  end
+
+  describe "shows public word lists" do
+    setup [:create_public_list]
+
+    test "allows unauthenticated users access", %{anonymous_conn: conn, public_list: word_list} do
+      conn = get(conn, word_list_path(conn, :public))
+
+      response = html_response(conn, 200)
+      # Check the response contains the word list
+      assert response =~ word_list.title
+
+      # But doesn't contain a button for adding the word list to the user's word (since there is no user)
+      refute response =~ "Add to my lists"
+    end
+
+    test "allows authenticated users access", %{conn: conn, public_list: word_list} do
+      conn = get(conn, word_list_path(conn, :public))
+
+      response = html_response(conn, 200)
+      assert response =~ word_list.title
+      assert response =~ "Add to my lists"
+    end
+  end
+
+  describe "sharing of public word lists" do
+    setup [:create_word_list, :create_non_owned_word_list]
+
+    test "allows users to share their own word lists", %{conn: conn, word_list: word_list} do
+      conn = get(conn, word_list_path(conn, :public))
+
+      refute html_response(conn, 200) =~ word_list.title
+
+      conn =
+        TestHelpers.reauth_as_user(conn)
+        |> get(word_list_path(conn, :share, word_list.id))
+
+      assert redirected_to(conn) == word_list_path(conn, :public)
+
+      conn =
+        TestHelpers.reauth_as_user(conn)
+        |> get(word_list_path(conn, :public))
+
+      assert html_response(conn, 200) =~ word_list.title
+    end
+
+    test "prevents sharing of other user's word lists", %{
+      conn: conn,
+      non_owned_word_list: word_list
+    } do
+      conn = get(conn, word_list_path(conn, :share, word_list.id))
+
+      assert html_response(conn, 400) =~ "Bad Request"
+    end
+  end
+
+  describe "claiming of public word lists" do
+    setup [:create_public_list]
+
+    test "allows users to claim lists", %{conn: conn, public_list: word_list} do
+      conn = get(conn, word_list_path(conn, :index))
+
+      refute html_response(conn, 200) =~ word_list.title
+
+      conn =
+        TestHelpers.reauth_as_user(conn)
+        |> get(word_list_path(conn, :claim, word_list.id))
+
+      assert redirected_to(conn) == word_list_path(conn, :index)
+
+      conn =
+        TestHelpers.reauth_as_user(conn)
+        |> get(word_list_path(conn, :index))
+
+      assert html_response(conn, 200) =~ word_list.title
+    end
+
+    test "redirects unauthenticated users to login", %{
+      anonymous_conn: conn,
+      public_list: word_list
+    } do
+      conn = get(conn, word_list_path(conn, :claim, word_list.id))
+
+      assert redirected_to(conn) == authentication_path(conn, :login)
     end
   end
 
@@ -155,5 +240,11 @@ defmodule LanguageWeb.WordListControllerTest do
     word_list = TestHelpers.create_word_list()
 
     {:ok, [word_list: word_list]}
+  end
+
+  defp create_public_list(_) do
+    word_list = TestHelpers.create_public_list()
+
+    {:ok, [public_list: word_list]}
   end
 end
