@@ -1,3 +1,15 @@
-<h1>Hello</h1>
+<head>
+	<link rel="stylesheet" href="<%= static_path(@conn, "/css/readview.css") %>">
+	<%= raw(@head) %>
+</head>
+<body>
+	<header class="header">
+        <%= render LanguageWeb.LayoutView, "nav_bar.html", assigns %>
+        <span class="logo"></span>
+    </header>
+	<div class="container">
+		<%= raw(@body) %>
+	</div>
 
-<p><%= @page %></p>
+    <script src="<%= static_path(@conn, "/js/readview.js") %>"></script>
+</body>

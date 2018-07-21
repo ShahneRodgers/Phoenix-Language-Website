@@ -4,35 +4,88 @@ defmodule Language.ExternalSite do
   """
   require HTTPoison
 
-  def get_site(site) do
-    case HTTPoison.get(site) do
+  require Logger
+
+  def make_request(conn, site) do
+    method = get_method(conn.method)
+
+    body =
+      case Plug.Conn.read_body(conn) do
+        {:ok, content, _conn} -> content
+        true -> ""
+      end
+
+    make_request(method, site, body)
+  end
+
+  def make_request(method, url, body) do
+    case HTTPoison.request(method, url, body, [], [%{follow_redirects: true}]) do
       {:ok, %HTTPoison.Response{status_code: 200, body: content}} ->
         {:ok, content}
 
       {:ok, response} ->
+        Logger.info(fn ->
+          "User requested site #{url} using method #{method} which returned an unexpected response #{
+            inspect(response)
+          }"
+        end)
+
         {:error, "The site returned a #{response.status_code} response"}
 
-      {:error, _response} ->
+      {:error, response} ->
+        Logger.info(fn ->
+          "User requested site #{url} which returned an error #{inspect(response)}"
+        end)
+
         {:error, "The site could not be reached"}
     end
   end
+
+  def update_site(original_url, site_content, update_functions, html_head_resources \\ [])
 
   def update_site(
         original_url,
         site_content,
         %{:update_visible_links => _func, :update_visible_text => _func2} = update_functions,
-        html_head_resources \\ []
+        html_head_resources
       )
       when is_list(html_head_resources) do
     #  We need the base site requested so that we can fix relative urls
     URI.parse(original_url)
     |> parse_html(site_content, update_functions, html_head_resources)
+    |> filter()
+  end
+
+  def update_site(
+        original_url,
+        site_content,
+        %{:update_visible_text => func},
+        html_head_resources
+      )
+      when is_list(html_head_resources) do
+    update_site(
+      original_url,
+      site_content,
+      %{:update_visible_links => fn val -> val end, :update_visible_text => func},
+      html_head_resources
+    )
+  end
+
+  defp filter(html_tree) do
+    head =
+      Floki.find(html_tree, "head")
+      |> Floki.raw_html()
+
+    body =
+      Floki.find(html_tree, "body")
+      |> Floki.raw_html()
+
+    {:ok, head, body}
   end
 
   defp parse_html(site, page, update_functions, html_head_resources) do
     Floki.parse(page)
     |> mapped_html(site, update_functions, html_head_resources)
-    |> Floki.raw_html()
   end
 
   defp mapped_html(html_nodes, site, update_functions, html_head_resources)
@@ -68,7 +121,13 @@ defmodule Language.ExternalSite do
   defp update_html(_site, %{:update_visible_text => update_text}, is_visible, [text])
        when is_binary(text) do
     if is_visible do
-      update_text.(text)
+      result = update_text.(text)
+
+      if is_list(result) do
+        result
+      else
+        [result]
+      end
     else
       [text]
     end
@@ -87,7 +146,7 @@ defmodule Language.ExternalSite do
     tag = elem(value, 0)
     # Embedded images don't need to be redirected through this site since they don't have words
     # to update (no OCR support).
-    is_visible = is_visible and tag not in ["img"]
+    is_visible = is_visible and tag not in ["img", "script"]
 
     attributes = update_html(site, update_functions, is_visible, elem(value, 1))
 
@@ -111,7 +170,17 @@ defmodule Language.ExternalSite do
 
   defp update_html(_site, %{:update_visible_text => update_text}, is_visible, value) do
     if is_binary(value) and is_visible do
-      update_text.(value)
+      result = update_text.(value)
+
+      if is_list(result) do
+        if length(result) > 1 do
+          Logger.error("Text updating returned an unexpected list: #{inspect(result)}")
+        end
+
+        hd(result)
+      else
+        result
+      end
     else
       value
     end
@@ -145,5 +214,22 @@ defmodule Language.ExternalSite do
     else
       absolute_url
     end
+  end
+
+  def get_method("GET") do
+    :get
+  end
+
+  def get_method("POST") do
+    :post
+  end
+
+  def get_method("PUT") do
+    :put
+  end
+
+  def get_method(method) do
+    Logger.warn(fn -> "Unexpected method #{method}" end)
+    :get
   end
 end

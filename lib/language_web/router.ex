@@ -38,7 +38,7 @@ defmodule LanguageWeb.Router do
 
     get("/start", ReadController, :start)
     get("/", ReadController, :start)
-    get("/browse", ReadController, :browse)
+    match(:*, "/browse", ReadController, :browse)
     resources("/users", UserController, except: [:new, :create])
     get("/users/grant/admin", UserController, :make_admin)
   end

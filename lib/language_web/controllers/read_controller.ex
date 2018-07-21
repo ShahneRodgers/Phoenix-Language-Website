@@ -4,11 +4,11 @@ defmodule LanguageWeb.ReadController do
   alias Language.{ExternalSite, TextModifier}
 
   def browse(conn, %{"site" => site}) do
-    case ExternalSite.get_site(site) do
+    case ExternalSite.make_request(conn, site) do
       {:ok, content} ->
         user = Guardian.Plug.current_resource(conn)
 
-        value =
+        {:ok, head, body} =
           ExternalSite.update_site(
             site,
             content,
@@ -19,7 +19,13 @@ defmodule LanguageWeb.ReadController do
             get_resources_links(conn)
           )
 
-        html(conn, value)
+        render(
+          conn,
+          "index.html",
+          head: head,
+          body: body,
+          layout: {LanguageWeb.ReadView, "index.html"}
+        )
 
       {:error, message} ->
         put_flash(conn, :error, message)
@@ -39,10 +45,8 @@ defmodule LanguageWeb.ReadController do
     read_path(LanguageWeb.Endpoint, :browse, site: url)
   end
 
-  defp get_resources_links(conn) do
+  defp get_resources_links(_) do
     [
-      {"link", [{"rel", "stylesheet"}, {"href", static_path(conn, "/css/readview.css")}], []},
-      {"script", [{"src", static_path(conn, "/js/readview.js")}], []},
       {"script", [],
        [
          """
