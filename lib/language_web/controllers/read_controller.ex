@@ -9,15 +9,10 @@ defmodule LanguageWeb.ReadController do
         user = Guardian.Plug.current_resource(conn)
 
         {:ok, head, body} =
-          ExternalSite.update_site(
-            site,
-            content,
-            %{
-              update_visible_links: &create_local_link/1,
-              update_visible_text: TextModifier.get_update_function(user.id)
-            },
-            get_resources_links(conn)
-          )
+          ExternalSite.update_site(site, content, %{
+            update_visible_links: &create_local_link/1,
+            update_visible_text: TextModifier.get_update_function(user.id)
+          })
 
         render(
           conn,
@@ -43,18 +38,5 @@ defmodule LanguageWeb.ReadController do
 
   defp create_local_link(url) do
     read_path(LanguageWeb.Endpoint, :browse, site: url)
-  end
-
-  defp get_resources_links(_) do
-    [
-      {"script", [],
-       [
-         """
-         document.addEventListener('DOMContentLoaded', function() {
-         	require("js/readview.js").init();
-         }, false);
-         """
-       ]}
-    ]
   end
 end

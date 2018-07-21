@@ -19,9 +19,7 @@ defmodule Language.ExternalSiteTest do
       # Check content is correctly returned.
       assert {:ok, ^content} = ExternalSite.make_request(:get, "http://example.com", "")
       # And that HTTPoison is called with the correct parameters.
-      assert called(
-               HTTPoison.request(:get, "http://example.com", "", [], [%{follow_redirects: true}])
-             )
+      assert called(HTTPoison.request(:get, "http://example.com", "", [], follow_redirect: true))
     end
   end
 
@@ -33,7 +31,7 @@ defmodule Language.ExternalSiteTest do
       assert {:error, "The site returned a 404 response"} =
                ExternalSite.make_request(:get, "notfound.site", "")
 
-      assert called(HTTPoison.request(:get, "notfound.site", "", [], [%{follow_redirects: true}]))
+      assert called(HTTPoison.request(:get, "notfound.site", "", [], follow_redirect: true))
     end
   end
 
@@ -56,9 +54,7 @@ defmodule Language.ExternalSiteTest do
 
       assert {:ok, _} = ExternalSite.make_request(conn, "site.com")
 
-      assert called(
-               HTTPoison.request(:post, "site.com", "some body", [], [%{follow_redirects: true}])
-             )
+      assert called(HTTPoison.request(:post, "site.com", "some body", [], follow_redirect: true))
     end
   end
 

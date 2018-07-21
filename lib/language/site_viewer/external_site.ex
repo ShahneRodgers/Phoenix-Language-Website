@@ -19,7 +19,7 @@ defmodule Language.ExternalSite do
   end
 
   def make_request(method, url, body) do
-    case HTTPoison.request(method, url, body, [], [%{follow_redirects: true}]) do
+    case HTTPoison.request(method, url, body, [], follow_redirect: true) do
       {:ok, %HTTPoison.Response{status_code: 200, body: content}} ->
         {:ok, content}
 
@@ -113,8 +113,11 @@ defmodule Language.ExternalSite do
            html_head_resources}
 
       _ ->
-        {name, attributes,
-         Enum.map(value, fn val -> update_html(site, update_functions, name == "body", val) end)}
+        value =
+          Enum.map(value, fn val -> update_html(site, update_functions, name == "body", val) end)
+          |> List.flatten()
+
+        {name, attributes, value}
     end
   end
 
@@ -170,17 +173,7 @@ defmodule Language.ExternalSite do
 
   defp update_html(_site, %{:update_visible_text => update_text}, is_visible, value) do
     if is_binary(value) and is_visible do
-      result = update_text.(value)
-
-      if is_list(result) do
-        if length(result) > 1 do
-          Logger.error("Text updating returned an unexpected list: #{inspect(result)}")
-        end
-
-        hd(result)
-      else
-        result
-      end
+      update_text.(value)
     else
       value
     end
