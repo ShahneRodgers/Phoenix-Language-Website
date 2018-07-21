@@ -140,8 +140,13 @@ defmodule LanguageWeb.WordListController do
   end
 
   defp get_public_user_id() do
-    # admin = Accounts.find_by_username(Application.get_env(:language, :admin_username))
-    # admin.id
-    Application.get_env(:language, :admin_id)
+    id = Application.get_env(:language, :admin_id)
+
+    if is_nil(id) do
+      user = Language.Accounts.find_by_username(Application.get_env(:language, :admin_username))
+      user.id
+    else
+      id
+    end
   end
 end

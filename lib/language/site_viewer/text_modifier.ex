@@ -128,7 +128,7 @@ defmodule Language.TextModifier do
           {"p", [{"class", "phoenix_translated_notes"}], [word.notes]}
         )
 
-    {"div", [{"class", "phoenix_translated_additional_info"}], nodes}
+    [{"div", [{"class", "phoenix_translated_additional_info"}], nodes}]
   end
 
   defp list_of_element_or_empty_if_nil(val, element) do

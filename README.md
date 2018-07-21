@@ -1,6 +1,8 @@
 
 [![Build status](https://travis-ci.org/ShahneRodgers/Phoenix-Language-Website.svg?branch=master)](https://travis-ci.org/ShahneRodgers/Phoenix-Language-Website)
 
+[![codecov](https://codecov.io/gh/ShahneRodgers/Phoenix-Language-Website/branch/master/graph/badge.svg)](https://codecov.io/gh/ShahneRodgers/Phoenix-Language-Website)
+
 # Language
 
 To start your Phoenix server:
